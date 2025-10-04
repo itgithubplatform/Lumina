@@ -1,8 +1,19 @@
-import { NextAuthOptions } from 'next-auth'
+import { DefaultSession, NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from './prisma'
+import { Role, Accessibility, User } from "@prisma/client"
 
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string
+      role: Role
+      accessibility: Accessibility[]|[]
+      provider: string
+    } & DefaultSession['user']
+  }
+}
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -23,9 +34,21 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account }) {
+      const userPrisma = user as User
       if (user) {
-        token.uid = String(user.id)
+      token.uid = userPrisma.id;
+      token.role = userPrisma.role;
+      token.accessibility = userPrisma.accessibility;
+    } else {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: token.uid as string },
+        select: { role: true, accessibility: true },
+      });
+      if (dbUser) {
+        token.role = dbUser.role;
+        token.accessibility = dbUser.accessibility;
       }
+    }
       if (account?.provider) {
         token.provider = account.provider
       }
@@ -34,6 +57,8 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.uid as string
+        session.user.role = token.role as Role
+        session.user.accessibility = token.accessibility as Accessibility[]|[]
         session.user.provider = token.provider as string
       }      
       return session

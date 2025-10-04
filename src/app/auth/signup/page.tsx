@@ -20,7 +20,7 @@ export default function page() {
     setIsLoading(true);
     setError("");
     try {
-      await signIn("google", { callbackUrl: "/dashboard" });
+      await signIn("google", { callbackUrl: "/select-role" });
     } catch (error) {
       setError("Failed to sign up with Google");
       setIsLoading(false);

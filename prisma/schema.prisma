@@ -42,10 +42,21 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  role          Role      @default(student)
+  accessibility Accessibility[] @default([])
   accounts      Account[]
   sessions      Session[]
 }
-
+enum Role {
+  student
+  teacher
+}
+enum Accessibility {
+  dyslexia         
+  visualImpairment  
+  hearingImpairment  
+  cognitiveDisability   
+}
 model VerificationToken {
   identifier String
   token      String   @unique
