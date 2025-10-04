@@ -18,7 +18,7 @@ const accessibilityOptions = [
 const checkRole = async(status: string, update: any, session: any, router: any) => {
     if (status === "authenticated") {
         if (session.user.role === "student" && session.user.accessibility && session.user.accessibility.length > 0) {
-          await update();  
+          await update();   
           router.push("/dashboard");
             return;            
         } 
@@ -102,7 +102,7 @@ export default function page() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, delay: 0.2 }}
-        className="relative z-10 bg-white/80 backdrop-blur-lg border border-white/60 shadow-xl rounded-3xl p-8 w-full max-w-md"
+        className="relative z-10 sm:bg-white/80 backdrop-blur-lg border sm:border-white/60 sm:shadow-xl rounded-3xl p-8 w-full max-w-md"
       >
         {/* Header */}
         <div className="text-center mb-6">
@@ -112,7 +112,7 @@ export default function page() {
             transition={{ duration: 0.4 }}
             className="flex justify-center mb-3"
           >
-           <Image className="rounded-lg" src="/logo.png" alt="logo" width={80} height={80} />
+           <Image className="rounded-lg" src="/logo.png" alt="logo" width={80} priority height={80} />
           </motion.div>
           <h1 className="text-2xl font-bold text-gray-900">Set Up Your Profile</h1>
           <p className="text-gray-600 text-sm mt-1">
