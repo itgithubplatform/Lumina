@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^1.6.0",
+    "@google-cloud/text-to-speech": "^6.3.0",
+    "@google-cloud/vertexai": "^1.10.0",
     "framer-motion": "^12.23.22",
     "lucide-react": "^0.544.0",
     "next": "15.5.4",
