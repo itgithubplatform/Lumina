@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Mic, MicOff, Volume2, VolumeX, HelpCircle } from 'lucide-react';
 import { useAccessibility } from '@/lib/accessibility-context';
 import { useVoiceAccessibility } from '@/lib/voice-accessibility';

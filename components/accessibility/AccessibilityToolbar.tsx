@@ -1,6 +1,4 @@
 'use client';
-
-import React from 'react';
 import { Eye, Volume2, Focus, Type, Palette, Settings } from 'lucide-react';
 import { useAccessibility } from '@/lib/accessibility-context';
 import { Button } from '@/components/ui/Button';

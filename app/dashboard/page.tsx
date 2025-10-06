@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import { useState, useRef, useEffect, type ChangeEvent, type RefObject } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { 
@@ -99,7 +99,7 @@ export default function Dashboard() {
   const [processingFiles, setProcessingFiles] = useState<string[]>([]);
 
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && selectedClassroom) {
       Array.from(files).forEach(file => {
@@ -343,9 +343,9 @@ export default function Dashboard() {
 function ClassroomContent({ classroom, onBack, onUpload, processingFiles, fileInputRef }: {
   classroom: Classroom;
   onBack: () => void;
-  onUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
   processingFiles: string[];
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: RefObject<HTMLInputElement>;
 }) {
   const { speak } = useAccessibility();
   const { announceAction, readContent } = useVoiceAccessibility();
@@ -491,7 +491,7 @@ function StudentDashboard({ profile }: { profile: string }) {
   const { speak } = useAccessibility();
   const { announceAction, announceNavigation, registerVoiceCommand, readContent } = useVoiceAccessibility();
   
-  React.useEffect(() => {
+  useEffect(() => {
     // Register voice commands for student dashboard
     registerVoiceCommand('visual support', () => {
       if (profile === 'visual' || profile === 'none') {

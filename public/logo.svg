@@ -1,0 +1,6 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="50" cy="50" r="45" fill="#0ea5e9" stroke="#0284c7" stroke-width="2"/>
+  <circle cx="50" cy="35" r="8" fill="white"/>
+  <path d="M30 60 Q50 45 70 60 Q50 75 30 60" fill="white"/>
+  <text x="50" y="85" text-anchor="middle" fill="white" font-family="Arial" font-size="12" font-weight="bold">L+</text>
+</svg>

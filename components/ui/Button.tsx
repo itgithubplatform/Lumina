@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
+import { type ButtonHTMLAttributes, type ReactNode, type MouseEvent } from 'react';
 import { useAccessibility } from '@/lib/accessibility-context';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'accessibility';
   size?: 'sm' | 'md' | 'lg';
   voiceCommand?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function Button({ 
@@ -34,7 +34,7 @@ export function Button({
     lg: 'px-6 py-3 text-lg',
   };
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
     if (settings.voiceNavigation) {
       speak(`${children} button clicked`);
     }

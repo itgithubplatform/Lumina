@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { 
@@ -77,7 +77,7 @@ export default function StudentDashboard() {
   
   const [activeTab, setActiveTab] = useState('lessons');
   
-  React.useEffect(() => {
+  useEffect(() => {
     // Register voice commands for student dashboard navigation
     registerVoiceCommand('lessons', () => {
       setActiveTab('lessons');
@@ -268,7 +268,7 @@ function LessonsSection({ data, config }: { data: StudentData; config: any }) {
   const { speak } = useAccessibility();
   const { announceAction, readContent } = useVoiceAccessibility();
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (config.title.includes('Visual')) {
       readContent(`Lessons section loaded. Current lesson: ${data.currentLesson.title} at ${data.currentLesson.progress}% progress. You have ${data.currentLesson.timeSpent} minutes of watch time. All lessons include audio narration and screen reader support.`);
     }
@@ -528,7 +528,7 @@ function ActivitiesSection({ data, config }: { data: StudentData; config: any })
   const { speak } = useAccessibility();
   const { announceAction, readContent } = useVoiceAccessibility();
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (config.title.includes('Visual')) {
       readContent(`Activities section loaded. You have ${data.activities.completed} completed activities and ${data.activities.remaining} remaining activities. All activities are voice-enabled with audio instructions.`);
     }

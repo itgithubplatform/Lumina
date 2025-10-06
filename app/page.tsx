@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { GraduationCap, Users, Eye, Ear, Brain, ArrowRight, Play, Volume2 } from 'lucide-react';
+import { GraduationCap, Users, Eye, Ear, Brain, ArrowRight, Play, Volume2, Sparkles, Zap, Star } from 'lucide-react';
 import { useAccessibility } from '@/lib/accessibility-context';
 import { useVoiceAccessibility } from '@/lib/voice-accessibility';
 import { Button } from '@/components/ui/Button';
@@ -14,241 +13,183 @@ export default function LandingPage() {
   const { profile, role, setProfile, setRole, speak, settings } = useAccessibility();
   const { announceAction, announceNavigation, registerVoiceCommand } = useVoiceAccessibility();
   const [showAccessibilitySetup, setShowAccessibilitySetup] = useState(false);
-  const [keyboardListening, setKeyboardListening] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    // Auto-speak welcome message for voice navigation users
-    if (settings.voiceNavigation) {
-      speak('Welcome to Lumina Plus. Say Student or Teacher to select your role.');
-    }
-    
-    // Register voice commands for this page
-    registerVoiceCommand('student', () => handleRoleSelection('student'));
-    registerVoiceCommand('teacher', () => handleRoleSelection('teacher'));
-    registerVoiceCommand('narration', () => handleAccessibilitySelection('visual'));
-    registerVoiceCommand('visual', () => handleAccessibilitySelection('visual'));
-    registerVoiceCommand('captions', () => handleAccessibilitySelection('hearing'));
-    registerVoiceCommand('hearing', () => handleAccessibilitySelection('hearing'));
-    registerVoiceCommand('simplified', () => handleAccessibilitySelection('cognitive'));
-    registerVoiceCommand('cognitive', () => handleAccessibilitySelection('cognitive'));
-    registerVoiceCommand('standard', () => handleAccessibilitySelection('none'));
-    registerVoiceCommand('none', () => handleAccessibilitySelection('none'));
-  }, [settings.voiceNavigation]);
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const handleRoleSelection = (selectedRole: 'student' | 'teacher') => {
     setRole(selectedRole);
     setShowAccessibilitySetup(true);
-    setKeyboardListening(true);
-    speak(`${selectedRole} role selected. How can we support your learning? Press 1 for Narration support, Press 2 for Captions, Press 3 for Simplified Text. Or say Narration, Captions, or Simplified.`);
-    announceAction(`Role selected: ${selectedRole}. Now choose accessibility profile.`);
+    speak(`${selectedRole} role selected.`);
   };
-
-  // Keyboard shortcuts for accessibility
-  useEffect(() => {
-    if (!keyboardListening) return;
-    
-    const handleKeyPress = (event: KeyboardEvent) => {
-      switch(event.key) {
-        case '1':
-          handleAccessibilitySelection('visual');
-          break;
-        case '2':
-          handleAccessibilitySelection('hearing');
-          break;
-        case '3':
-          handleAccessibilitySelection('cognitive');
-          break;
-        case '4':
-          handleAccessibilitySelection('none');
-          break;
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [keyboardListening]);
-
-  // Enhanced voice commands
-  useEffect(() => {
-    if (!keyboardListening) return;
-    
-    const handleVoiceCommands = () => {
-      if ('webkitSpeechRecognition' in window) {
-        const recognition = new (window as any).webkitSpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = false;
-        
-        recognition.onresult = (event: any) => {
-          const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
-          
-          if (transcript.includes('narration') || transcript.includes('visual')) {
-            handleAccessibilitySelection('visual');
-          } else if (transcript.includes('captions') || transcript.includes('hearing')) {
-            handleAccessibilitySelection('hearing');
-          } else if (transcript.includes('simplified') || transcript.includes('cognitive')) {
-            handleAccessibilitySelection('cognitive');
-          } else if (transcript.includes('standard') || transcript.includes('none')) {
-            handleAccessibilitySelection('none');
-          }
-        };
-        
-        recognition.start();
-        
-        return () => recognition.stop();
-      }
-    };
-    
-    const cleanup = handleVoiceCommands();
-    return cleanup;
-  }, [keyboardListening]);
 
   const handleAccessibilitySelection = (selectedProfile: typeof profile) => {
     setProfile(selectedProfile);
-    setKeyboardListening(false);
-    speak(`${selectedProfile} accessibility profile selected. Redirecting to dashboard.`);
-    announceNavigation(`${role} dashboard with ${selectedProfile} accessibility`);
+    speak(`${selectedProfile} accessibility profile selected.`);
     setTimeout(() => {
       router.push('/dashboard');
     }, 1000);
   };
 
-  const accessibilityOptions = [
-    {
-      id: 'visual' as const,
-      title: 'Visual Impairment',
-      description: 'Voice navigation, high contrast, screen reader support',
-      icon: Eye,
-      features: ['🎧 Voice Navigation', '🔊 Text-to-Speech', '⚫ High Contrast', '🔍 Large Text'],
-      color: 'bg-blue-500',
-    },
-    {
-      id: 'hearing' as const,
-      title: 'Hearing Impairment',
-      description: 'Captions, transcripts, visual indicators',
-      icon: Ear,
-      features: ['📝 Auto Captions', '📄 Transcripts', '👋 Sign Language', '💬 Visual Alerts'],
-      color: 'bg-green-500',
-    },
-    {
-      id: 'cognitive' as const,
-      title: 'Cognitive Support',
-      description: 'Simplified text, focus mode, dyslexia-friendly fonts',
-      icon: Brain,
-      features: ['✍️ Simple Text', '🎯 Focus Mode', '📖 Dyslexia Font', '🐌 Slow Reading'],
-      color: 'bg-purple-500',
-    },
-    {
-      id: 'none' as const,
-      title: 'No Special Needs',
-      description: 'Standard interface with optional accessibility features',
-      icon: Users,
-      features: ['📱 Standard UI', '⚙️ Custom Settings', '🔧 Optional Tools', '🚀 Full Features'],
-      color: 'bg-gray-500',
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-10 left-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute top-0 right-4 w-72 h-72 bg-yellow-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
-        <div className="absolute bottom-20 right-20 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-6000"></div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-teal-800 relative overflow-hidden">
       
-      {/* Floating Particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <div
+      {/* Dynamic Mouse-Following Gradient */}
+      <div 
+        className="absolute w-96 h-96 bg-gradient-to-r from-emerald-400/30 to-teal-400/30 rounded-full blur-3xl transition-all duration-1000 ease-out"
+        style={{
+          left: mousePosition.x - 192,
+          top: mousePosition.y - 192,
+        }}
+      />
+      
+      {/* Geometric Background Pattern */}
+      <div className="absolute inset-0">
+        {[...Array(12)].map((_, i) => (
+          <motion.div
             key={i}
-            className="absolute animate-float"
+            className="absolute w-32 h-32 border border-emerald-400/20 rotate-45"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${3 + Math.random() * 4}s`
+              left: `${(i % 4) * 25}%`,
+              top: `${Math.floor(i / 4) * 33}%`,
             }}
-          >
-            <div className="w-2 h-2 bg-white rounded-full opacity-30"></div>
-          </div>
+            animate={{
+              rotate: [45, 225, 45],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 8 + i,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
         ))}
       </div>
 
-      {/* Hero Section */}
+      {/* Floating Orbs */}
+      <div className="absolute inset-0">
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-4 h-4 bg-gradient-to-r from-emerald-300 to-teal-300 rounded-full shadow-lg"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [-20, 20, -20],
+              x: [-10, 10, -10],
+              opacity: [0.3, 1, 0.3],
+            }}
+            transition={{
+              duration: 4 + Math.random() * 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.5
+            }}
+          />
+        ))}
+      </div>
+
       <div className="relative z-10 container mx-auto px-4 py-8">
+        
+        {/* Hero Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="text-center mb-16"
+          transition={{ duration: 1.2, ease: "easeOut" }}
+          className="text-center mb-20"
         >
+          
+          {/* Logo */}
           <motion.div 
             className="flex justify-center mb-8"
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ duration: 1, delay: 0.2, type: "spring", stiffness: 200 }}
+            initial={{ scale: 0, rotateY: 180 }}
+            animate={{ scale: 1, rotateY: 0 }}
+            transition={{ duration: 1, delay: 0.3, type: "spring" }}
           >
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 rounded-full blur-lg opacity-75 animate-pulse"></div>
-              <Image
-                src="/logo.png"
-                alt="Lumina+ Logo"
-                width={140}
-                height={140}
-                className="relative rounded-full shadow-2xl border-4 border-white/20 backdrop-blur-sm"
+              <motion.div 
+                className="w-24 h-24 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-2xl flex items-center justify-center shadow-2xl"
+                whileHover={{ 
+                  scale: 1.1, 
+                  rotateY: 180,
+                  boxShadow: "0 25px 50px -12px rgba(16, 185, 129, 0.5)"
+                }}
+                transition={{ duration: 0.6 }}
+              >
+                <span className="text-white text-3xl font-black">L+</span>
+              </motion.div>
+              <motion.div
+                className="absolute -inset-2 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-2xl opacity-20 blur-xl"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
               />
             </div>
           </motion.div>
           
+          {/* Title */}
           <motion.h1 
-            className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent drop-shadow-2xl"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-7xl md:text-8xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
           >
-            Lumina<span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent animate-pulse">+</span>
+            Lumina<motion.span 
+              className="inline-block text-yellow-400"
+              animate={{ rotate: [0, 15, -15, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >+</motion.span>
           </motion.h1>
           
+          {/* Tagline */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="mb-8"
+            transition={{ duration: 0.8, delay: 0.7 }}
+            className="mb-12"
           >
-            <p className="text-2xl md:text-3xl lg:text-4xl text-white font-bold mb-4 drop-shadow-lg">
-              ✨ Lighting the way for every learner ✨
+            <p className="text-2xl md:text-3xl text-emerald-100 font-light mb-6 leading-relaxed">
+              Where <span className="font-bold text-yellow-400">accessibility</span> meets <span className="font-bold text-teal-300">innovation</span>
             </p>
             
-            <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-2xl">
-              <p className="text-lg md:text-xl text-white/90 leading-relaxed">
-                🚀 Bridging barriers in education through technology, making learning accessible, 
-                engaging, and empowering for differently-abled students.
+            <div className="max-w-3xl mx-auto bg-slate-800/40 backdrop-blur-xl rounded-3xl p-6 border border-emerald-400/20">
+              <p className="text-lg text-emerald-50/90">
+                🌟 Transforming education through AI-powered accessibility tools that adapt to every learner's unique needs
               </p>
             </div>
           </motion.div>
-          
-          {/* Animated Feature Icons */}
+
+          {/* Feature Pills */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="flex justify-center gap-8 mb-8"
+            transition={{ duration: 0.8, delay: 0.9 }}
+            className="flex flex-wrap justify-center gap-4 mb-12"
           >
             {[
-              { icon: '🎧', label: 'Audio' },
-              { icon: '📝', label: 'Captions' },
-              { icon: '🧠', label: 'Smart AI' },
-              { icon: '♿', label: 'Accessible' }
+              { icon: '🎯', text: 'Smart AI', color: 'from-emerald-400 to-teal-400' },
+              { icon: '🎧', text: 'Audio First', color: 'from-teal-400 to-cyan-400' },
+              { icon: '👁️', text: 'Visual Support', color: 'from-cyan-400 to-blue-400' },
+              { icon: '🧠', text: 'Cognitive Aid', color: 'from-blue-400 to-indigo-400' }
             ].map((item, index) => (
               <motion.div
                 key={index}
-                className="flex flex-col items-center"
-                whileHover={{ scale: 1.2, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
+                className={`px-6 py-3 bg-gradient-to-r ${item.color} rounded-full text-white font-semibold shadow-lg`}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1 + index * 0.1 }}
               >
-                <div className="text-4xl mb-2 filter drop-shadow-lg">{item.icon}</div>
-                <span className="text-white/80 text-sm font-medium">{item.label}</span>
+                <span className="mr-2">{item.icon}</span>
+                {item.text}
               </motion.div>
             ))}
           </motion.div>
@@ -257,305 +198,242 @@ export default function LandingPage() {
         {!showAccessibilitySetup ? (
           /* Role Selection */
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 1 }}
-            className="max-w-5xl mx-auto"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.2 }}
+            className="max-w-6xl mx-auto"
           >
             <motion.h2 
-              className="text-4xl md:text-5xl font-black text-center mb-12 text-white drop-shadow-2xl"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1.2 }}
+              className="text-4xl md:text-5xl font-bold text-center mb-16 text-emerald-100"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.4 }}
             >
-              🎯 Choose Your Role
+              Choose Your Learning Journey
             </motion.h2>
             
-            <div className="grid md:grid-cols-2 gap-10">
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              
+              {/* Student Card */}
               <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 1.4 }}
-                whileHover={{ scale: 1.05, y: -10 }}
-                whileTap={{ scale: 0.95 }}
-                className="group bg-gradient-to-br from-blue-500/20 to-purple-600/20 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/30 cursor-pointer transition-all duration-500 hover:shadow-blue-500/25 hover:border-blue-400/50"
+                whileHover={{ 
+                  scale: 1.02, 
+                  y: -8,
+                  boxShadow: "0 25px 50px -12px rgba(16, 185, 129, 0.3)"
+                }}
+                whileTap={{ scale: 0.98 }}
+                className="group relative bg-gradient-to-br from-slate-800/60 to-emerald-900/60 backdrop-blur-xl rounded-3xl p-8 border border-emerald-400/30 cursor-pointer overflow-hidden"
                 onClick={() => handleRoleSelection('student')}
               >
-                <div className="text-center">
+                {/* Animated Background */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 to-teal-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                />
+                
+                <div className="relative z-10">
                   <motion.div 
-                    className="bg-gradient-to-r from-blue-400 to-purple-500 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:shadow-blue-500/50 transition-all duration-300"
-                    whileHover={{ rotate: 360 }}
+                    className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl"
+                    whileHover={{ rotateY: 180 }}
                     transition={{ duration: 0.6 }}
                   >
-                    <GraduationCap size={48} className="text-white drop-shadow-lg" />
+                    <GraduationCap size={40} className="text-white" />
                   </motion.div>
-                  <h3 className="text-3xl font-black mb-4 text-white drop-shadow-lg group-hover:text-blue-300 transition-colors duration-300">
-                    🎓 I am a Student
+                  
+                  <h3 className="text-3xl font-bold text-center mb-4 text-emerald-100 group-hover:text-emerald-300 transition-colors">
+                    Student Portal
                   </h3>
-                  <p className="text-white/90 mb-6 leading-relaxed text-lg">
-                    Access personalized learning materials with adaptive accessibility features 
-                    tailored to your needs.
+                  
+                  <p className="text-emerald-100/80 text-center mb-6 leading-relaxed">
+                    Access personalized learning with adaptive accessibility features tailored to your unique needs
                   </p>
-                  <div className="space-y-3 text-white/80 mb-8">
-                    <div className="flex items-center justify-center gap-2 text-lg">
-                      <span className="text-2xl">📚</span> View accessible lessons
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-lg">
-                      <span className="text-2xl">🎧</span> Audio narration
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-lg">
-                      <span className="text-2xl">📝</span> Interactive transcripts
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-lg">
-                      <span className="text-2xl">🎯</span> Focus mode
-                    </div>
+                  
+                  <div className="space-y-3 mb-8">
+                    {[
+                      '📚 Interactive Learning Materials',
+                      '🎧 AI-Powered Audio Narration', 
+                      '📝 Smart Transcription Tools',
+                      '🎯 Personalized Study Plans'
+                    ].map((feature, i) => (
+                      <motion.div
+                        key={i}
+                        className="flex items-center text-emerald-100/90"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1.6 + i * 0.1 }}
+                      >
+                        <span className="mr-3">{feature.split(' ')[0]}</span>
+                        <span>{feature.substring(feature.indexOf(' ') + 1)}</span>
+                      </motion.div>
+                    ))}
                   </div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  
+                  <Button 
+                    variant="primary" 
+                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 border-0 py-4 text-lg font-semibold"
                   >
-                    <Button variant="primary" size="lg" className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 text-lg shadow-2xl border-0">
-                      Continue as Student <ArrowRight size={24} className="ml-2" />
-                    </Button>
-                  </motion.div>
+                    Start Learning <ArrowRight size={20} className="ml-2" />
+                  </Button>
                 </div>
               </motion.div>
 
+              {/* Teacher Card */}
               <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 1.6 }}
-                whileHover={{ scale: 1.05, y: -10 }}
-                whileTap={{ scale: 0.95 }}
-                className="group bg-gradient-to-br from-green-500/20 to-emerald-600/20 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/30 cursor-pointer transition-all duration-500 hover:shadow-green-500/25 hover:border-green-400/50"
+                whileHover={{ 
+                  scale: 1.02, 
+                  y: -8,
+                  boxShadow: "0 25px 50px -12px rgba(20, 184, 166, 0.3)"
+                }}
+                whileTap={{ scale: 0.98 }}
+                className="group relative bg-gradient-to-br from-slate-800/60 to-teal-900/60 backdrop-blur-xl rounded-3xl p-8 border border-teal-400/30 cursor-pointer overflow-hidden"
                 onClick={() => handleRoleSelection('teacher')}
               >
-                <div className="text-center">
+                {/* Animated Background */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-br from-teal-400/10 to-cyan-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                />
+                
+                <div className="relative z-10">
                   <motion.div 
-                    className="bg-gradient-to-r from-green-400 to-emerald-500 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:shadow-green-500/50 transition-all duration-300"
-                    whileHover={{ rotate: 360 }}
+                    className="w-20 h-20 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl"
+                    whileHover={{ rotateY: 180 }}
                     transition={{ duration: 0.6 }}
                   >
-                    <Users size={48} className="text-white drop-shadow-lg" />
+                    <Users size={40} className="text-white" />
                   </motion.div>
-                  <h3 className="text-3xl font-black mb-4 text-white drop-shadow-lg group-hover:text-green-300 transition-colors duration-300">
-                    👨‍🏫 I am a Teacher
+                  
+                  <h3 className="text-3xl font-bold text-center mb-4 text-teal-100 group-hover:text-teal-300 transition-colors">
+                    Teacher Hub
                   </h3>
-                  <p className="text-white/90 mb-6 leading-relaxed text-lg">
-                    Upload and manage educational content with automatic accessibility 
-                    features for all students.
+                  
+                  <p className="text-teal-100/80 text-center mb-6 leading-relaxed">
+                    Create and manage accessible content with AI-powered tools that automatically adapt for all learners
                   </p>
-                  <div className="space-y-3 text-white/80 mb-8">
-                    <div className="flex items-center justify-center gap-2 text-lg">
-                      <span className="text-2xl">📤</span> Upload lessons
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-lg">
-                      <span className="text-2xl">🤖</span> Auto-generate captions
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-lg">
-                      <span className="text-2xl">📊</span> Track student progress
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-lg">
-                      <span className="text-2xl">🎨</span> Accessibility presets
-                    </div>
+                  
+                  <div className="space-y-3 mb-8">
+                    {[
+                      '📤 Smart Content Upload',
+                      '🤖 Auto-Generate Accessibility', 
+                      '📊 Student Progress Analytics',
+                      '🎨 Customizable Learning Paths'
+                    ].map((feature, i) => (
+                      <motion.div
+                        key={i}
+                        className="flex items-center text-teal-100/90"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1.6 + i * 0.1 }}
+                      >
+                        <span className="mr-3">{feature.split(' ')[0]}</span>
+                        <span>{feature.substring(feature.indexOf(' ') + 1)}</span>
+                      </motion.div>
+                    ))}
                   </div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  
+                  <Button 
+                    variant="primary" 
+                    className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 border-0 py-4 text-lg font-semibold"
                   >
-                    <Button variant="primary" size="lg" className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 text-lg shadow-2xl border-0">
-                      Continue as Teacher <ArrowRight size={24} className="ml-2" />
-                    </Button>
-                  </motion.div>
+                    Create Content <ArrowRight size={20} className="ml-2" />
+                  </Button>
                 </div>
               </motion.div>
             </div>
 
-            {/* Voice Command Hint */}
+            {/* Auth Links */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.8 }}
-              className="text-center mt-12 p-6 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 backdrop-blur-xl rounded-2xl border border-yellow-300/30 shadow-2xl"
-            >
-              <p className="text-white text-lg">
-                🎤 <strong>Voice Navigation:</strong> Say "Student" or "Teacher" to select your role
-              </p>
-            </motion.div>
-            
-            {/* Authentication Links */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ delay: 2 }}
-              className="text-center mt-8"
+              className="text-center mt-16"
             >
-              <p className="text-white/90 mb-6 text-lg">Already have an account?</p>
-              <div className="flex gap-6 justify-center">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    variant="secondary"
-                    onClick={() => router.push('/auth/signin')}
-                    voiceCommand="Sign in"
-                    className="bg-white/20 backdrop-blur-md border-white/30 text-white hover:bg-white/30 px-8 py-3 text-lg font-semibold"
-                  >
-                    Sign In
-                  </Button>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    variant="primary"
-                    onClick={() => router.push('/auth/signup')}
-                    voiceCommand="Sign up"
-                    className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold border-0 shadow-2xl"
-                  >
-                    Sign Up
-                  </Button>
-                </motion.div>
+              <p className="text-emerald-100/80 mb-6">Already have an account?</p>
+              <div className="flex gap-4 justify-center">
+                <Button
+                  variant="secondary"
+                  onClick={() => router.push('/auth/signin')}
+                  className="bg-slate-800/60 border-emerald-400/30 text-emerald-100 hover:bg-slate-700/60"
+                >
+                  Sign In
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => router.push('/auth/signup')}
+                  className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 border-0"
+                >
+                  Sign Up
+                </Button>
               </div>
             </motion.div>
           </motion.div>
         ) : (
           /* Accessibility Setup */
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6 }}
-            className="max-w-6xl mx-auto"
+            className="max-w-5xl mx-auto"
           >
-            <h2 className="text-3xl font-bold text-center mb-4 text-gray-800">
-              How can we support your learning?
+            <h2 className="text-3xl font-bold text-center mb-8 text-emerald-100">
+              Customize Your Experience
             </h2>
-            <p className="text-center text-gray-600 mb-4">
-              Choose your accessibility needs to personalize your experience
-            </p>
             
-            {/* Keyboard & Voice Instructions */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-center">
-              <p className="text-blue-800 font-medium mb-2">🎯 Quick Selection Options:</p>
-              <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-700">
-                <div>
-                  <p><strong>Keyboard:</strong> Press 1, 2, 3, or 4</p>
-                  <p>1️⃣ Narration • 2️⃣ Captions • 3️⃣ Simplified • 4️⃣ Standard</p>
-                </div>
-                <div>
-                  <p><strong>Voice:</strong> Say your preference</p>
-                  <p>"Narration" • "Captions" • "Simplified" • "Standard"</p>
-                </div>
-              </div>
-            </div>
-
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {accessibilityOptions.map((option) => (
+              {[
+                { id: 'visual', title: 'Visual Support', icon: Eye, desc: 'Audio narration & high contrast', color: 'from-blue-400 to-indigo-500' },
+                { id: 'hearing', title: 'Hearing Support', icon: Ear, desc: 'Captions & visual alerts', color: 'from-emerald-400 to-teal-500' },
+                { id: 'cognitive', title: 'Cognitive Support', icon: Brain, desc: 'Simplified text & focus mode', color: 'from-purple-400 to-pink-500' },
+                { id: 'none', title: 'Standard Mode', icon: Users, desc: 'Full-featured interface', color: 'from-gray-400 to-slate-500' }
+              ].map((option, index) => (
                 <motion.div
                   key={option.id}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`bg-white rounded-xl shadow-lg p-6 cursor-pointer border-2 transition-all duration-300 ${
-                    profile === option.id ? 'border-primary-500 ring-4 ring-primary-200' : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => handleAccessibilitySelection(option.id)}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-emerald-400/20 cursor-pointer text-center"
+                  onClick={() => handleAccessibilitySelection(option.id as any)}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  <div className="text-center">
-                    <div className={`${option.color} rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 relative`}>
-                      <option.icon size={32} className="text-white" />
-                      <span className="absolute -top-2 -right-2 bg-white text-gray-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold border-2">
-                        {option.id === 'visual' ? '1' : option.id === 'hearing' ? '2' : option.id === 'cognitive' ? '3' : '4'}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-bold mb-2 text-gray-800">{option.title}</h3>
-                    <p className="text-sm text-gray-600 mb-4">{option.description}</p>
-                    <div className="space-y-1">
-                      {option.features.map((feature, index) => (
-                        <div key={index} className="text-xs text-gray-500">{feature}</div>
-                      ))}
-                    </div>
+                  <div className={`w-16 h-16 bg-gradient-to-r ${option.color} rounded-xl flex items-center justify-center mx-auto mb-4`}>
+                    <option.icon size={28} className="text-white" />
                   </div>
+                  <h3 className="text-lg font-bold text-emerald-100 mb-2">{option.title}</h3>
+                  <p className="text-emerald-100/70 text-sm">{option.desc}</p>
                 </motion.div>
               ))}
-            </div>
-
-            <div className="text-center mt-8">
-              <p className="text-gray-500 mb-4">You can change these settings anytime from the accessibility toolbar</p>
-              <Button
-                variant="secondary"
-                onClick={() => setShowAccessibilitySetup(false)}
-              >
-                ← Back to Role Selection
-              </Button>
             </div>
           </motion.div>
         )}
 
-        {/* Features Preview */}
+        {/* Bottom Features */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 2.2 }}
-          className="mt-20 max-w-6xl mx-auto"
+          transition={{ duration: 0.8, delay: 2.5 }}
+          className="mt-24 text-center"
         >
-          <motion.h2 
-            className="text-4xl md:text-5xl font-black text-center mb-16 text-white drop-shadow-2xl"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 2.4 }}
-          >
-            🤖 Powered by AI Accessibility
-          </motion.h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
+          <h3 className="text-2xl font-bold text-emerald-100 mb-8">Powered by Advanced AI</h3>
+          <div className="flex justify-center gap-8 flex-wrap">
             {[
-              {
-                icon: Play,
-                title: 'Speech-to-Text',
-                description: 'Auto-generate transcripts from videos and lectures',
-                gradient: 'from-blue-400 to-cyan-400',
-                delay: 2.6
-              },
-              {
-                icon: Volume2,
-                title: 'Text-to-Speech',
-                description: 'Narration for all content with adjustable speed',
-                gradient: 'from-green-400 to-emerald-400',
-                delay: 2.8
-              },
-              {
-                icon: Brain,
-                title: 'AI Simplification',
-                description: 'Simplified summaries for cognitive accessibility',
-                gradient: 'from-purple-400 to-pink-400',
-                delay: 3.0
-              }
+              { icon: Play, title: 'Speech-to-Text' },
+              { icon: Volume2, title: 'Text-to-Speech' },
+              { icon: Brain, title: 'Smart Summaries' }
             ].map((feature, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 30, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.6, delay: feature.delay }}
-                whileHover={{ scale: 1.05, y: -10 }}
-                className="group text-center p-8 bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 hover:border-white/40 transition-all duration-300"
+                className="flex items-center gap-3 bg-slate-800/40 rounded-full px-6 py-3"
+                whileHover={{ scale: 1.05 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 2.7 + index * 0.1 }}
               >
-                <motion.div 
-                  className={`bg-gradient-to-r ${feature.gradient} rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:shadow-lg transition-all duration-300`}
-                  whileHover={{ rotate: 360 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <feature.icon size={32} className="text-white drop-shadow-lg" />
-                </motion.div>
-                <h3 className="font-black mb-4 text-white text-xl group-hover:text-yellow-300 transition-colors duration-300">
-                  {feature.title}
-                </h3>
-                <p className="text-white/80 leading-relaxed group-hover:text-white transition-colors duration-300">
-                  {feature.description}
-                </p>
+                <feature.icon size={20} className="text-emerald-400" />
+                <span className="text-emerald-100">{feature.title}</span>
               </motion.div>
             ))}
           </div>
         </motion.div>
       </div>
-      
-      {/* Bottom Gradient Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
     </div>
   );
 }

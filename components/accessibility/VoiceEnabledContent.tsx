@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode, type FormEvent } from 'react';
 import { useVoiceAccessibility } from '@/lib/voice-accessibility';
 import { useAccessibility } from '@/lib/accessibility-context';
 
 interface VoiceEnabledContentProps {
-  children: React.ReactNode;
+  children: ReactNode;
   contentType?: 'lesson' | 'navigation' | 'form' | 'button' | 'text';
   autoRead?: boolean;
   priority?: 'low' | 'medium' | 'high';
@@ -77,7 +77,7 @@ export function VoiceEnabledButton({
   className = '',
   ...props
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   onClick?: () => void;
   description: string;
   className?: string;
@@ -116,7 +116,7 @@ export function VoiceEnabledText({
   priority = 'low',
   className = ''
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   autoRead?: boolean;
   priority?: 'low' | 'medium' | 'high';
   className?: string;
@@ -161,7 +161,7 @@ export function VoiceEnabledNavigation({
   navigationDescription,
   className = ''
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   navigationDescription: string;
   className?: string;
 }) {
@@ -191,9 +191,9 @@ export function VoiceEnabledForm({
   onSubmit,
   className = ''
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   formDescription: string;
-  onSubmit?: (e: React.FormEvent) => void;
+  onSubmit?: (e: FormEvent) => void;
   className?: string;
 }) {
   const { profile } = useAccessibility();
@@ -205,7 +205,7 @@ export function VoiceEnabledForm({
     }
   }, [profile, formDescription]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     announceAction('Form submitted');
     onSubmit?.(e);
   };

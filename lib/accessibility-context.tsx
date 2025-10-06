@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export type AccessibilityProfile = 'visual' | 'hearing' | 'cognitive' | 'none';
 export type UserRole = 'student' | 'teacher' | null;
@@ -40,7 +40,7 @@ const defaultSettings: AccessibilitySettings = {
 
 const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
 
-export function AccessibilityProvider({ children }: { children: React.ReactNode }) {
+export function AccessibilityProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<AccessibilityProfile>('none');
   const [role, setRole] = useState<UserRole>(null);
   const [settings, setSettings] = useState<AccessibilitySettings>(defaultSettings);
