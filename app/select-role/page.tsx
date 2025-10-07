@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Eye, Headphones, Accessibility, Brain, Loader2 } from "lucide-react";
+import { Sparkles, Eye, Headphones, Accessibility, Palette, Brain, MousePointer2, Loader2 } from "lucide-react";
+import BubbleBlob from "@/components/ui/bubbleBlob";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 
 const accessibilityOptions = [
   { id: "dyslexia", label: "Dyslexia Support", icon: Brain },
@@ -13,7 +15,23 @@ const accessibilityOptions = [
   { id: "cognitiveDisability", label: "Cognitive Support", icon: Accessibility },
 ];
 
-
+const checkRole = async(status: string, update: any, session: any, router: any) => {
+    if (status === "authenticated") {
+        if (session.user.role === "student" && session.user.accessibility && session.user.accessibility.length > 0) {
+          await update();   
+          router.push("/dashboard");
+            return;            
+        } 
+        if (session.user.role === "teacher") {
+          await update();
+          router.push("/dashboard");
+            return;            
+        }
+      }
+      if (status === "unauthenticated") {
+        router.push("/auth/signin");
+      }
+}
 
 export default function page() {
     const [role, setRole] = useState<"student" | "teacher">("student");
@@ -21,6 +39,13 @@ export default function page() {
     const router = useRouter();
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const {data: session, status, update} = useSession();
+
+  useEffect(() => {
+    checkRole(status, update, session, router);
+    console.log(session);
+    
+  }, [status, session]);
 
   const handleAccessSelect = (id: string) => {
       if (selectedAccess.includes(id)) {
@@ -40,19 +65,38 @@ export default function page() {
      try {
         setLoading(true);
         setError("");
-        // Simulate profile setup
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 1000);
+            const res = await fetch("/api/user/update", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    role,
+                    accessibility: selectedAccess})
+            });
+            if (!res.ok) {
+                setError("Failed to update user");
+                return;
+            }
+            await update();
+            router.push("/dashboard");
         } catch (err) {
             console.log(err);
         }finally {
             setLoading(false);
         }    
   };
-
+  if(status === "loading"){
+    return (
+        <main className="min-h-screen flex flex-col justify-center items-center px-4 bg-gradient-to-br from-[#dbeafe] via-white to-[#e0f2fe]">
+            <BubbleBlob />
+        <Loader2 className="animate-spin h-10 w-10 text-blue-500" />
+        </main>
+    )
+  }
   return (
     <main className="min-h-screen flex flex-col justify-center items-center px-4 bg-gradient-to-br from-[#dbeafe] via-white to-[#e0f2fe]">
+        <BubbleBlob />
       {/* Card */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -62,15 +106,17 @@ export default function page() {
       >
         {/* Header */}
         <div className="text-center mb-6">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4 }}
-            className="flex justify-center mb-3"
-          >
-           <Image className="rounded-lg" src="/logo.png" alt="logo" width={80} priority height={80} />
-          </motion.div>
-          <h1 className="text-2xl font-bold text-gray-900">Set Up Your Profile</h1>
+           <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          className="flex justify-center"
+        >
+          <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+            <span className="text-white text-2xl font-bold">L+</span>
+          </div>
+        </motion.div>
+          <h1 className=" text-2xl font-bold text-gray-900">Set Up Your Profile</h1>
           <p className="text-gray-600 text-sm mt-1">
             Choose your role and accessibility preferences to personalize your experience.
           </p>

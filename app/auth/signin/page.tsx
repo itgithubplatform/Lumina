@@ -1,31 +1,36 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "nextjs-toploader/app";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-
+import { FcGoogle } from "react-icons/fc";
 import Link from "next/link";
 
 export default function page() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError("");
     try {
-      // Simulate sign in process
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 800);
+      await signIn("google", { callbackUrl: "/select-role" });
     } catch (error) {
       setError("Failed to sign in with Google");
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (status === "authenticated") {
+    router.push("/");
+  }
+  }, [status, router]);
 
   return (
     <main className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-gradient-to-br from-[#dbeafe] via-white to-[#e0f2fe]">
@@ -85,7 +90,7 @@ export default function page() {
           {isLoading ? (
             <Loader2 className="animate-spin mr-3 h-5 w-5 text-gray-500" />
           ) : (
-            <div className="w-6 h-6 mr-2 bg-gradient-to-r from-blue-500 to-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">G</div>
+            <FcGoogle className="mr-2 w-6 h-6" />
           )}
           {isLoading ? "Signing in..." : "Continue with Google"}
         </motion.button>

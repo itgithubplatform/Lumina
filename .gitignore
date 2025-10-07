@@ -24,7 +24,6 @@ yarn-error.log*
 
 # Local env files
 .env*.local
-.env
 
 # Vercel
 .vercel
@@ -45,10 +44,9 @@ Thumbs.db
 # Logs
 logs
 *.log
-
+.env 
+vertex-key.json
 # Temporary files
 tmp/
 temp/
-
-
-vertex-key.json
+/generated/prisma

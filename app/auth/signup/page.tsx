@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen, Headphones, Accessibility, Sparkles } from "lucide-react";
-
+import { FcGoogle } from "react-icons/fc";
 import Link from "next/link";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
@@ -12,21 +13,23 @@ import { Loader2 } from "lucide-react";
 export default function page() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   const handleGoogleSignUp = async () => {
     setIsLoading(true);
     setError("");
     try {
-      // Simulate sign up process
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 800);
+      await signIn("google", { callbackUrl: "/select-role" });
     } catch (error) {
       setError("Failed to sign up with Google");
       setIsLoading(false);
     }
   };
+
+  if (status === "authenticated") {
+    router.push("/dashboard");
+  }
 
   return (
     <main className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-gradient-to-br from-[#dbeafe] via-white to-[#e0f2fe]">
@@ -60,7 +63,6 @@ export default function page() {
             <span className="text-white text-2xl font-bold">L+</span>
           </div>
         </motion.div>
-
         {/* Title */}
         <h1 className="mt-4 text-3xl font-bold text-gray-900">Join Lumina+</h1>
         <p className="text-blue-700 italic mt-1 mb-6">"Bridging barriers in education through technology"</p>
@@ -87,7 +89,7 @@ export default function page() {
           {isLoading ? (
             <Loader2 className="animate-spin mr-3 h-5 w-5 text-gray-500" />
           ) : (
-            <div className="w-6 h-6 mr-3 bg-gradient-to-r from-blue-500 to-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">G</div>
+            <FcGoogle className="w-6 h-6 mr-3" />
           )}
           <span className="font-medium text-gray-700">
             {isLoading ? "Creating account..." : "Continue with Google"}

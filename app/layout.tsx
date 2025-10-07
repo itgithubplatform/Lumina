@@ -5,6 +5,7 @@ import { VoiceAccessibilityProvider } from '@/lib/voice-accessibility';
 import { AccessibilityToolbar } from '@/components/accessibility/AccessibilityToolbar';
 import { VoiceNavigator } from '@/components/accessibility/VoiceNavigator';
 import '@/styles/globals.css';
+import { AuthProvider } from '@/components/providers/authProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <AuthProvider>
         <VoiceAccessibilityProvider>
           <AccessibilityProvider>
             <AccessibilityToolbar />
@@ -31,6 +33,7 @@ export default function RootLayout({
             </main>
           </AccessibilityProvider>
         </VoiceAccessibilityProvider>
+        </AuthProvider>
       </body>
     </html>
   );
