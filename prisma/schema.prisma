@@ -7,261 +7,60 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                   String   @id @default(cuid())
-  email                String   @unique
-  name                 String
-  passwordHash         String?
-  role                 Role     @default(STUDENT)
-  accessibilityProfile AccessibilityProfile @default(NONE)
-  settings             Json?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  classrooms           Classroom[]
-  content              Content[]
-  studentProgress      StudentProgress[]
-  accessibilityUsage   AccessibilityUsage[]
-  notifications        Notification[]
-  achievements         Achievement[]
-  learningStreak       LearningStreak?
-  flashcards           Flashcard[]
-  quizAttempts         QuizAttempt[]
-
-  @@map("users")
-}
-
-model Classroom {
-  id          String   @id @default(cuid())
-  name        String
-  subject     String
-  description String?
-  teacherId   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  teacher     User      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  content     Content[]
-
-  @@map("classrooms")
-}
-
-model Content {
-  id               String          @id @default(cuid())
-  title            String
-  type             ContentType
-  originalFilePath String?
-  youtubeUrl       String?
-  classroomId      String
-  teacherId        String
-  durationMinutes  Int?
-  difficulty       Difficulty      @default(BEGINNER)
-  processingStatus ProcessingStatus @default(PENDING)
-  uploadDate       DateTime        @default(now())
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-
-  classroom        Classroom         @relation(fields: [classroomId], references: [id], onDelete: Cascade)
-  teacher          User              @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  processedContent ProcessedContent[]
-  studentProgress  StudentProgress[]
-
-  @@map("content")
-}
-
-model ProcessedContent {
-  id                   String            @id @default(cuid())
-  contentId            String
-  accessibilityType    AccessibilityType
-  processedData        Json
-  processingCompleted  Boolean           @default(false)
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-
-  content              Content           @relation(fields: [contentId], references: [id], onDelete: Cascade)
-
-  @@unique([contentId, accessibilityType])
-  @@map("processed_content")
-}
-
-model StudentProgress {
-  id                  String   @id @default(cuid())
-  studentId           String
-  contentId           String
-  progressPercentage  Float    @default(0)
-  timeSpentMinutes    Int      @default(0)
-  completed           Boolean  @default(false)
-  lastAccessed        DateTime @default(now())
-  bookmarks           Json?
-  notes               String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  student             User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  content             Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
-
-  @@unique([studentId, contentId])
-  @@map("student_progress")
-}
-
-model AccessibilityUsage {
-  id                     String   @id @default(cuid())
-  userId                 String
-  contentId              String?
-  featureType            String
-  usageCount             Int      @default(1)
-  sessionDurationSeconds Int      @default(0)
-  createdAt              DateTime @default(now())
-
-  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("accessibility_usage")
-}
-
-model Notification {
-  id         String            @id @default(cuid())
-  userId     String
-  type       NotificationType
-  title      String
-  message    String
-  readStatus Boolean           @default(false)
-  createdAt  DateTime          @default(now())
-
-  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("notifications")
-}
-
-model Achievement {
-  id              String          @id @default(cuid())
-  userId          String
-  achievementType AchievementType
-  achievementName String
-  description     String?
-  earnedAt        DateTime        @default(now())
-
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("achievements")
-}
-
-model LearningStreak {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  currentStreak    Int      @default(0)
-  longestStreak    Int      @default(0)
-  lastActivityDate DateTime @default(now())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("learning_streaks")
-}
-
-model Flashcard {
-  id                String     @id @default(cuid())
+model Account {
+  id                String  @id @default(cuid())
   userId            String
-  front             String
-  back              String
-  category          String
-  difficulty        Difficulty @default(EASY)
-  visualCues        Json?
-  simplifiedVersion Json?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
 
-  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("flashcards")
+  @@unique([provider, providerAccountId])
 }
 
-model Quiz {
-  id          String        @id @default(cuid())
-  title       String
-  description String?
-  category    String
-  difficulty  Difficulty    @default(EASY)
-  questions   Json
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  attempts    QuizAttempt[]
-
-  @@map("quizzes")
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model QuizAttempt {
-  id          String   @id @default(cuid())
-  userId      String
-  quizId      String
-  answers     Json
-  score       Float
-  timeSpent   Int
-  completedAt DateTime @default(now())
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-
-  @@map("quiz_attempts")
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          Role      @default(student)
+  accessibility Accessibility[] @default([])
+  accounts      Account[]
+  sessions      Session[]
 }
-
 enum Role {
-  STUDENT
-  TEACHER
-  ADMIN
+  student
+  teacher
 }
-
-enum AccessibilityProfile {
-  VISUAL
-  HEARING
-  COGNITIVE
-  MOTOR
-  NONE
+enum Accessibility {
+  dyslexia         
+  visualImpairment  
+  hearingImpairment  
+  cognitiveDisability   
 }
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-enum ContentType {
-  PDF
-  VIDEO
-  YOUTUBE
-  DOCUMENT
-  AUDIO
-  TEXT
-}
-
-enum Difficulty {
-  EASY
-  MEDIUM
-  HARD
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-}
-
-enum ProcessingStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-}
-
-enum AccessibilityType {
-  VISUAL
-  HEARING
-  COGNITIVE
-  MOTOR
-}
-
-enum NotificationType {
-  ACHIEVEMENT
-  REMINDER
-  UPDATE
-  SYSTEM
-}
-
-enum AchievementType {
-  STREAK
-  COMPLETION
-  PROGRESS
-  SKILL
+  @@unique([identifier, token])
 }

@@ -24,6 +24,7 @@ yarn-error.log*
 
 # Local env files
 .env*.local
+.env
 
 # Vercel
 .vercel
@@ -48,3 +49,6 @@ logs
 # Temporary files
 tmp/
 temp/
+
+
+vertex-key.json
