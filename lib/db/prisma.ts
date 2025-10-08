@@ -1,5 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+// lib/db/prisma.ts
+import PrismaClientPkg from '@prisma/client';
+const { PrismaClient } = PrismaClientPkg; // extract the class
 
+// Create a global variable to prevent multiple instances in dev
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
