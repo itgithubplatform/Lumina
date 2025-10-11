@@ -15,7 +15,8 @@ export class HLSConverter {
         return HLSConverter.instance;
     }
 
-    async convertToHLS(inputFile: string, outputDir: string) {
+    async convertToHLS(inputFile: string, fileName: string) {
+        const outputDir = path.join(path.dirname(inputFile), path.parse(fileName).name + "_hls");
         if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
         const resolutions = [
@@ -59,11 +60,12 @@ export class HLSConverter {
 
         fs.writeFileSync(masterPath, masterContent);
 
-        return masterPath;
+        return outputDir;
     }
-    async extractAudio(inputFile: string, outputDir: string, format: "mp3" | "wav" = "mp3") {
+    async extractAudio(inputFile: string, fileName: string, format: "mp3" | "wav" = "mp3") {
+        const outputDir = path.join(path.dirname(inputFile), "audio");
         if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-        const audioFile = path.join(outputDir, `audio.${format}`);
+        const audioFile = path.join(outputDir, `${fileName}.${format}`);
 
         return new Promise<string>((resolve, reject) => {
             ffmpeg(inputFile)

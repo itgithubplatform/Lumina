@@ -22,8 +22,9 @@ export class GoogleAi {
             googleAuthOptions: {
                 keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
             },
+            location: "asia-south1",
         }).getGenerativeModel({
-            model: "gemini-2.5-flash-lite",
+            model: "gemini-2.5-flash",
         });
         this.ttsClient = new textToSpeech.TextToSpeechClient();
         this.storageClient = new Storage()
@@ -37,9 +38,6 @@ export class GoogleAi {
     }
     async generateText(prompt: string) {
         try {
-            if (prompt.trim() === "" || prompt.length > 10000) {
-                throw new Error("Invalid prompt");
-            }
             const response = await this.vertex.generateContent({
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
             });
@@ -48,24 +46,27 @@ export class GoogleAi {
             throw new Error("Error generating text: " + (error as Error)?.message);;
         }
     }
-    async generateTextToSpeech(text: string, outputFile = "public/output.mp3") {
+    async generateTextToSpeech(text: string, outputFile = `./uploads/${Date.now()}-output.mp3`) {
         try {
             const [response] = await this.ttsClient.synthesizeSpeech({
                 input: { text },
                 voice: {
                     "languageCode": "en-in",
-                    "name": "en-IN-Wavenet-D"
+                    "name": "en-IN-Chirp3-HD-Achernar"
                 },
                 audioConfig: {
                     audioEncoding: "MP3",
                     speakingRate: 0.9,
-                    pitch: 1.0,
+                    pitch: 0,
                 },
             })
             if (!response.audioContent) {
                 throw new Error("No audio content received");
             }
             await writeFile(outputFile, response.audioContent, 'binary');
+            const {publicUrl} = await this.uploadToCloudStorage(outputFile, "audio");
+            fs.unlinkSync(outputFile);
+            return publicUrl;
         } catch (error) {
             throw new Error("Error generating speech: " + (error as Error)?.message);;
         }
@@ -79,9 +80,10 @@ export class GoogleAi {
          config:{
         encoding: "MP3",
         enableAutomaticPunctuation: false,
-        enableWordTimeOffsets: false,
-        sampleRateHertz: 44100,
+        enableWordTimeOffsets: true,
+        sampleRateHertz: 16000,
         languageCode: lang,
+        alternativeLanguageCodes:["en","hi","bn"],
         model: "default", 
       }
       });
@@ -116,7 +118,7 @@ export class GoogleAi {
       );
     }
   }
-    async uploadToCloudStorage(sourcePath: string, fileType: "hls" | "audio"): Promise<string> {
+    async uploadToCloudStorage(sourcePath: string, fileType: "hls" | "audio"): Promise<{publicUrl: string, googleStorageUri: string}> {
         const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
         if (!bucketName) throw new Error("Missing bucket");
 
@@ -135,13 +137,13 @@ export class GoogleAi {
                     }
                 });
             }));
-            return `https://storage.googleapis.com/${bucketName}/hls/${uploadId}/master.m3u8`;
+            return {publicUrl: `https://storage.googleapis.com/${bucketName}/hls/${uploadId}/master.m3u8`, googleStorageUri: `gs://${bucketName}/hls/${uploadId}/master.m3u8`};
         }
         const newFileName = `${Date.now()}-${path.basename(sourcePath)}`
         const [file] = await bucket.upload(sourcePath, {
             destination: `audio/${newFileName}`,
             metadata: { cacheControl: "public, max-age=31536000" }
         });
-        return file.publicUrl();
+        return {publicUrl: file.publicUrl(), googleStorageUri: `gs://${bucketName}/audio/${newFileName}`}
     }
 }

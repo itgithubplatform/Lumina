@@ -3,14 +3,14 @@
 import { useState, useRef, useEffect, type ChangeEvent, type RefObject } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { 
-  Upload, 
-  FileText, 
-  Video, 
-  Youtube, 
-  BookOpen, 
-  Play, 
-  Download, 
+import {
+  Upload,
+  FileText,
+  Video,
+  Youtube,
+  BookOpen,
+  Play,
+  Download,
   Search,
   Plus,
   Eye,
@@ -26,12 +26,17 @@ import {
 import { useAccessibility } from '@/lib/accessibility-context';
 import { useVoiceAccessibility } from '@/lib/voice-accessibility';
 import { Button } from '@/components/ui/Button';
+import CreateClassroomSection from '@/components/dashboard/createClassRoom';
+import TeacherDashboardHeader from '@/components/dashboard/teacherDashboardHeader';
+import ClassroomCard from '@/components/dashboard/classroomCard';
+import { useSession } from 'next-auth/react';
+import Loader from '@/components/ui/loader';
 
 interface Classroom {
   id: string;
   name: string;
   subject: string;
-  studentCount: number;
+  _count: { students: number };
   folders: {
     normal: Content[];
     visual: Content[];
@@ -57,47 +62,18 @@ interface Content {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { role, profile, speak, settings } = useAccessibility();
+  const { data: session, status } = useSession();
+  const { profile, speak, settings } = useAccessibility();
+  const role = session?.user?.role // Change to 'student' to test student view
   const { announceAction, announceNavigation, registerVoiceCommand, readContent } = useVoiceAccessibility();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [classrooms, setClassrooms] = useState<Classroom[]>([
-    {
-      id: '1',
-      name: 'Class 7 Science',
-      subject: 'Science',
-      studentCount: 32,
-      folders: {
-        normal: [
-          { id: '1', title: 'Solar System', type: 'video', originalFile: 'solar.mp4', aiProcessed: { visual: { tts: true, imageDesc: true }, hearing: { captions: true, signLanguage: false }, cognitive: { simplified: true, summary: true }, motor: { voiceNav: true, largeButtons: true } }, uploadDate: '2024-01-15' }
-        ],
-        visual: [],
-        hearing: [],
-        cognitive: [],
-        motor: []
-      }
-    },
-    {
-      id: '2',
-      name: 'Class 8 Mathematics',
-      subject: 'Mathematics',
-      studentCount: 28,
-      folders: {
-        normal: [
-          { id: '2', title: 'Algebra Basics', type: 'pdf', originalFile: 'algebra.pdf', aiProcessed: { visual: { tts: true, imageDesc: true }, hearing: { captions: false, signLanguage: false }, cognitive: { simplified: true, summary: true }, motor: { voiceNav: true, largeButtons: true } }, uploadDate: '2024-01-14' }
-        ],
-        visual: [],
-        hearing: [],
-        cognitive: [],
-        motor: []
-      }
-    }
-  ]);
+  const [classrooms, setClassrooms] = useState<Classroom[]>([])
   const [selectedClassroom, setSelectedClassroom] = useState<string | null>(null);
   const [showCreateClassroom, setShowCreateClassroom] = useState(false);
   const [newClassroomName, setNewClassroomName] = useState('');
   const [newClassroomSubject, setNewClassroomSubject] = useState('');
   const [processingFiles, setProcessingFiles] = useState<string[]>([]);
-
+  const [reload,setReload] = useState(false);
 
   const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -117,18 +93,18 @@ export default function Dashboard() {
           },
           uploadDate: new Date().toISOString().split('T')[0]
         };
-        
+
         // Add to normal folder first
-        setClassrooms(prev => prev.map(classroom => 
+        setClassrooms(prev => prev.map(classroom =>
           classroom.id === selectedClassroom
             ? { ...classroom, folders: { ...classroom.folders, normal: [...classroom.folders.normal, newContent] } }
             : classroom
         ));
-        
+
         setProcessingFiles(prev => [...prev, fileId]);
         speak(`${file.name} uploaded successfully. AI is processing accessibility features for all student categories.`);
         announceAction(`File uploaded: ${file.name}. AI processing started.`);
-        
+
         // Simulate AI processing
         setTimeout(() => {
           setClassrooms(prev => prev.map(classroom => {
@@ -142,7 +118,7 @@ export default function Dashboard() {
                   motor: { voiceNav: true, largeButtons: true }
                 }
               };
-              
+
               return {
                 ...classroom,
                 folders: {
@@ -156,7 +132,7 @@ export default function Dashboard() {
             }
             return classroom;
           }));
-          
+
           setProcessingFiles(prev => prev.filter(id => id !== fileId));
           speak(`${file.name} AI processing complete. Content is now available in all accessibility folders with TTS narration, captions, simplified summaries, and motor support.`);
           announceAction(`AI processing complete for ${file.name}. All accessibility versions ready.`);
@@ -165,166 +141,71 @@ export default function Dashboard() {
     }
   };
 
+  const getClassrooms = async () => {
+    try {
+      const res = await fetch('/api/classroom');
+      const data = await res.json();
+      if (res.ok) {
+        setClassrooms(data.classrooms);
+      } else {
+        speak('Error fetching classrooms. Please try again later.');
+        announceAction('Error fetching classrooms from server.');
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      speak('Network error while fetching classrooms. Please check your connection.');
+      announceAction('Network error while fetching classrooms.');
+    }
+  };
 
-
+  useEffect(() => {
+    getClassrooms();
+  }, [reload]);
+  if (status === 'loading') {
+    return <Loader />;
+  }
+  if(status === 'unauthenticated'){
+    return router.push('/auth/signin')
+  }
   if (role === 'teacher') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pt-16">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 pt-16">
         <div className="container mx-auto px-4 py-8">
           {/* Teacher Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
-          >
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-full p-3">
-                <GraduationCap size={32} className="text-white" />
-              </div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Teacher Hub
-              </h1>
-            </div>
-            <p className="text-xl text-gray-600">Create accessible classrooms for every learner</p>
-          </motion.div>
+          <TeacherDashboardHeader />
 
           {!selectedClassroom ? (
             /* Classroom Selection */
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="max-w-4xl mx-auto"
+              className="max-w-7xl mx-auto"
             >
               {/* Create New Classroom */}
-              <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="bg-green-100 rounded-full p-2">
-                    <Plus size={24} className="text-green-600" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-800">Create New Classroom</h2>
-                </div>
-                
-                {!showCreateClassroom ? (
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    onClick={() => setShowCreateClassroom(true)}
-                    className="w-full h-16 text-lg"
-                  >
-                    <FolderPlus size={24} className="mr-3" />
-                    Create Virtual Classroom
-                  </Button>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        placeholder="Classroom Name (e.g., Class 7 Science)"
-                        value={newClassroomName}
-                        onChange={(e) => setNewClassroomName(e.target.value)}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-lg"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Subject (e.g., Mathematics)"
-                        value={newClassroomSubject}
-                        onChange={(e) => setNewClassroomSubject(e.target.value)}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-lg"
-                      />
-                    </div>
-                    <div className="flex gap-3">
-                      <Button
-                        variant="primary"
-                        onClick={() => {
-                          if (newClassroomName && newClassroomSubject) {
-                            const newClassroom: Classroom = {
-                              id: Date.now().toString(),
-                              name: newClassroomName,
-                              subject: newClassroomSubject,
-                              studentCount: 0,
-                              folders: { normal: [], visual: [], hearing: [], cognitive: [], motor: [] }
-                            };
-                            setClassrooms(prev => [...prev, newClassroom]);
-                            setNewClassroomName('');
-                            setNewClassroomSubject('');
-                            setShowCreateClassroom(false);
-                            speak(`${newClassroomName} classroom created successfully`);
-                            announceAction(`Created classroom: ${newClassroomName}`);
-                          }
-                        }}
-                      >
-                        <Sparkles size={16} className="mr-2" />
-                        Create Classroom
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={() => setShowCreateClassroom(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <CreateClassroomSection setReload={setReload} />
 
               {/* Existing Classrooms */}
-              <div className="grid md:grid-cols-2 gap-6">
-                {classrooms.map((classroom, index) => (
-                  <motion.div
+              <h2 className="text-2xl text-gray-700 font-semibold mt-20 mb-8">Existing Classrooms</h2>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 ">
+                {classrooms.length > 0 && classrooms.map((classroom, index) => (
+                  <ClassroomCard
                     key={classroom.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ scale: 1.02 }}
-                    className="bg-white rounded-xl shadow-lg p-6 border cursor-pointer hover:shadow-xl transition-all duration-300"
-                    onClick={() => {
-                      setSelectedClassroom(classroom.id);
-                      speak(`Opened ${classroom.name} classroom`);
-                      announceNavigation(`${classroom.name} classroom content management`);
-                    }}
-                  >
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg p-3">
-                        <BookOpen size={24} className="text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-800">{classroom.name}</h3>
-                        <p className="text-gray-600">{classroom.subject}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Users size={16} />
-                        <span>{classroom.studentCount} students</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-xs text-green-600">AI Ready</span>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 flex gap-2">
-                      <div className="flex-1 bg-gray-100 rounded-lg p-2 text-center">
-                        <div className="text-lg font-bold text-gray-800">{classroom.folders.normal.length}</div>
-                        <div className="text-xs text-gray-600">Content</div>
-                      </div>
-                      <div className="flex-1 bg-blue-50 rounded-lg p-2 text-center">
-                        <div className="text-lg font-bold text-blue-600">4</div>
-                        <div className="text-xs text-blue-600">AI Folders</div>
-                      </div>
-                    </div>
-                  </motion.div>
+                    classroom={classroom}
+                    index={index}
+                    speak={speak}
+                    announceNavigation={announceNavigation}
+                  />
                 ))}
               </div>
             </motion.div>
           ) : (
             /* Classroom Content Management */
-            <ClassroomContent 
+            <ClassroomContent
               classroom={classrooms.find(c => c.id === selectedClassroom)!}
               onBack={() => setSelectedClassroom(null)}
               onUpload={handleFileUpload}
               processingFiles={processingFiles}
+              // @ts-ignore
               fileInputRef={fileInputRef}
             />
           )}
@@ -332,11 +213,11 @@ export default function Dashboard() {
       </div>
     );
   }
-
-  // Student Dashboard
-  return (
-    <StudentDashboard profile={profile} />
-  );
+  if (session?.user.role === "student") {
+    return (
+      <StudentDashboard profile={profile} />
+    );
+  }
 }
 
 // Classroom Content Component
@@ -349,7 +230,7 @@ function ClassroomContent({ classroom, onBack, onUpload, processingFiles, fileIn
 }) {
   const { speak } = useAccessibility();
   const { announceAction, readContent } = useVoiceAccessibility();
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -363,7 +244,7 @@ function ClassroomContent({ classroom, onBack, onUpload, processingFiles, fileIn
         </Button>
         <div>
           <h1 className="text-3xl font-bold text-gray-800">{classroom.name}</h1>
-          <p className="text-gray-600">{classroom.subject} • {classroom.studentCount} students</p>
+          <p className="text-gray-600">{classroom.subject} • {classroom._count.students} students</p>
         </div>
       </div>
 
@@ -375,7 +256,7 @@ function ClassroomContent({ classroom, onBack, onUpload, processingFiles, fileIn
           </div>
           <h2 className="text-xl font-bold text-gray-800">Upload & AI Process</h2>
         </div>
-        
+
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           <Button
             variant="primary"
@@ -386,20 +267,20 @@ function ClassroomContent({ classroom, onBack, onUpload, processingFiles, fileIn
             Upload Files
             <span className="text-xs opacity-75">PDF, DOCX, Video</span>
           </Button>
-          
+
           <Button variant="secondary" className="h-20 flex-col">
             <Youtube size={24} className="mb-2" />
             YouTube URL
             <span className="text-xs opacity-75">Paste link</span>
           </Button>
-          
+
           <Button variant="secondary" className="h-20 flex-col">
             <Video size={24} className="mb-2" />
             Record Video
             <span className="text-xs opacity-75">Live recording</span>
           </Button>
         </div>
-        
+
         <input
           ref={fileInputRef}
           type="file"
@@ -408,7 +289,7 @@ function ClassroomContent({ classroom, onBack, onUpload, processingFiles, fileIn
           onChange={onUpload}
           className="hidden"
         />
-        
+
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
           <h3 className="font-semibold text-gray-800 mb-2 flex items-center">
             <Sparkles size={16} className="mr-2" />
@@ -461,7 +342,7 @@ function FolderCard({ title, icon: Icon, count, color }: {
     purple: 'from-purple-400 to-purple-600 bg-purple-50 text-purple-700',
     orange: 'from-orange-400 to-orange-600 bg-orange-50 text-orange-700'
   };
-  
+
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -476,7 +357,7 @@ function FolderCard({ title, icon: Icon, count, color }: {
           <p className="text-sm text-gray-600">{count} items</p>
         </div>
       </div>
-      
+
       <div className={`${colorClasses[color as keyof typeof colorClasses].split(' ')[2]} ${colorClasses[color as keyof typeof colorClasses].split(' ')[3]} rounded-lg p-3 text-center`}>
         <div className="text-lg font-bold">{count}</div>
         <div className="text-xs">Content Items</div>
@@ -490,7 +371,7 @@ function StudentDashboard({ profile }: { profile: string }) {
   const router = useRouter();
   const { speak } = useAccessibility();
   const { announceAction, announceNavigation, registerVoiceCommand, readContent } = useVoiceAccessibility();
-  
+
   useEffect(() => {
     // Register voice commands for student dashboard
     registerVoiceCommand('visual support', () => {
@@ -515,12 +396,12 @@ function StudentDashboard({ profile }: { profile: string }) {
       announceNavigation('Standard learning materials');
       router.push('/student/normal');
     });
-    
+
     if (profile === 'visual') {
       readContent('Student dashboard loaded. You have access to visual support materials with audio narration, screen reader support, and high contrast display. Say "visual support" to access your materials.');
     }
   }, [profile]);
-  
+
   const studentSections = [
     {
       id: 'normal',
@@ -559,7 +440,7 @@ function StudentDashboard({ profile }: { profile: string }) {
       available: profile === 'cognitive' || profile === 'none'
     }
   ];
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pt-16">
       <div className="container mx-auto px-4 py-8">
@@ -589,11 +470,10 @@ function StudentDashboard({ profile }: { profile: string }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ scale: section.available ? 1.02 : 1 }}
-              className={`bg-white rounded-xl shadow-lg p-6 border transition-all duration-300 ${
-                section.available 
-                  ? 'cursor-pointer hover:shadow-xl' 
+              className={`bg-white rounded-xl shadow-lg p-6 border transition-all duration-300 ${section.available
+                  ? 'cursor-pointer hover:shadow-xl'
                   : 'opacity-50 cursor-not-allowed'
-              }`}
+                }`}
               onClick={() => {
                 if (section.available) {
                   speak(`Accessing ${section.title} learning materials`);
@@ -611,7 +491,7 @@ function StudentDashboard({ profile }: { profile: string }) {
                   <p className="text-gray-600">{section.description}</p>
                 </div>
               </div>
-              
+
               {section.available ? (
                 <div className={`${section.bgColor} rounded-lg p-3 text-center`}>
                   <div className="text-sm font-medium text-gray-700">Available Content</div>

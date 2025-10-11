@@ -20,8 +20,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -35,32 +34,73 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String          @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String          @unique
   emailVerified DateTime?
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  role          Role      @default(student)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  role          Role            @default(student)
   accessibility Accessibility[] @default([])
   accounts      Account[]
+  classesTeach  Classroom[]     @relation("TeacherClasses")
   sessions      Session[]
+  classesJoin   Classroom[]     @relation("StudentClasses")
 }
-enum Role {
-  student
-  teacher
-}
-enum Accessibility {
-  dyslexia         
-  visualImpairment  
-  hearingImpairment  
-  cognitiveDisability   
-}
+
 model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Classroom {
+  id        String   @id @default(cuid())
+  name      String
+  subject   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  teacherId String
+  teacher   User     @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
+  files     Files[]
+  students  User[]   @relation("StudentClasses")
+
+  @@unique([teacherId, name])
+}
+
+model Files {
+  id                String    @id @default(cuid())
+  name              String
+  link              String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  classId           String
+  audioLink         String?
+  status            Status    @default(processing)
+  extractedText     String?
+  blindFriendlyLink String?
+  transcript        Json?
+  dislexiaFriendly  Json?
+  class             Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  student
+  teacher
+}
+
+enum Accessibility {
+  dyslexia
+  visualImpairment
+  hearingImpairment
+  cognitiveDisability
+}
+
+enum Status {
+  processing
+  completed
+  failed
 }

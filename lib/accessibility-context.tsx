@@ -114,7 +114,7 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
     }
 
     // Font size
-    body.style.fontSize = {
+    document.documentElement.style.fontSize = {
       small: '14px',
       medium: '16px',
       large: '20px',

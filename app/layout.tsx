@@ -6,6 +6,8 @@ import { AccessibilityToolbar } from '@/components/accessibility/AccessibilityTo
 import { VoiceNavigator } from '@/components/accessibility/VoiceNavigator';
 import '@/styles/globals.css';
 import { AuthProvider } from '@/components/providers/authProvider';
+import NextTopLoader from 'nextjs-toploader';
+import Navbar from '@/components/common/navbar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,8 +24,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={inter.className + " !bg-gradient-to-b from-indigo-50 to-blue-50"}>
+        <NextTopLoader height={3} showSpinner={false} />
         <AuthProvider>
+          <Navbar />
         <VoiceAccessibilityProvider>
           <AccessibilityProvider>
             <AccessibilityToolbar />

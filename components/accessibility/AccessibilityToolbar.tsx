@@ -33,16 +33,20 @@ export function AccessibilityToolbar() {
     updateSettings({ voiceNavigation: !settings.voiceNavigation });
     speak(settings.voiceNavigation ? 'Voice navigation disabled' : 'Voice navigation enabled');
   };
-
+  
   return (
-    <div className="fixed top-4 right-4 bg-white shadow-lg rounded-lg p-2 flex gap-2 z-40 border">
+    <div className="fixed top-20 left-4 bg-white shadow-lg  p-2 px-3 flex gap-2 z-50 border rounded-xl">
+      <div className='flex flex-col items-center'>
+    <h3 className='text-sm font-bold text-black'>Tool Bar</h3>
+    <div className='flex flex-row gap-2 mt-1'>
+
       <Button
         variant={settings.highContrast ? 'accessibility' : 'secondary'}
         size="sm"
         onClick={toggleHighContrast}
         voiceCommand="Toggle high contrast"
         title="Toggle High Contrast"
-      >
+        >
         <Palette size={16} />
       </Button>
 
@@ -52,19 +56,19 @@ export function AccessibilityToolbar() {
         onClick={toggleDyslexiaFriendly}
         voiceCommand="Toggle dyslexia friendly font"
         title="Toggle Dyslexia Friendly Font"
-      >
+        >
         <Type size={16} />
       </Button>
 
-      <Button
+      {/* <Button
         variant={settings.focusMode ? 'accessibility' : 'secondary'}
         size="sm"
         onClick={toggleFocusMode}
         voiceCommand="Toggle focus mode"
         title="Toggle Focus Mode"
       >
-        <Focus size={16} />
-      </Button>
+      <Focus size={16} />
+      </Button> */}
 
       <Button
         variant="secondary"
@@ -76,15 +80,17 @@ export function AccessibilityToolbar() {
         <span className="text-xs font-bold">A</span>
       </Button>
 
-      <Button
+      {/* <Button
         variant={settings.voiceNavigation ? 'accessibility' : 'secondary'}
         size="sm"
         onClick={toggleVoiceNavigation}
         voiceCommand="Toggle voice navigation"
         title="Toggle Voice Navigation"
       >
-        <Volume2 size={16} />
-      </Button>
+      <Volume2 size={16} />
+      </Button> */}
     </div>
+        </div>
+      </div>
   );
 }
