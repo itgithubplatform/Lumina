@@ -61,7 +61,7 @@ export default async function FileViewPage({ params }: any) {
     
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pt-20 py-8 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pt-24 py-8 px-4">
         {
         // @ts-ignore
         <FileDisplayer file={file} userId={session.user.id} />

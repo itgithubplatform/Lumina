@@ -82,7 +82,7 @@ export default function FileDisplayer({file}:{
             <p className="text-gray-600">From {file?.class.name}</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {/* Main Content - Left Column */}
             <div className="lg:col-span-2 space-y-8">
               {/* Original File Viewer */}
@@ -219,7 +219,7 @@ export default function FileDisplayer({file}:{
                       <h2 className="text-xl font-semibold">Transcript</h2>
                     </div>
                   </div>
-                  <div className="p-6 max-h-64 overflow-y-auto">
+                  <div className="p-6 max-h-[41.7rem] overflow-y-auto">
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
                         <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">
@@ -269,7 +269,7 @@ export default function FileDisplayer({file}:{
             className="group relative"
           >
             {/* Scene Card */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 overflow-hidden hover:shadow-xl transition-all duration-300 ">
               <div className="p-6">
                 {/* Header with Number */}
                 <div className="flex items-start justify-between mb-6">
@@ -299,7 +299,7 @@ export default function FileDisplayer({file}:{
                   {/* Image Section */}
                   {scene.image && (
                     <motion.div
-                      whileHover={{ scale: 1.03 }}
+                      whileHover={{ scale: 1.01 }}
                       transition={{ type: "spring", stiffness: 300 }}
                       className="relative rounded-xl overflow-hidden shadow-md"
                     >
@@ -308,7 +308,7 @@ export default function FileDisplayer({file}:{
                         alt={scene.title}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                      {/* <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div> */}
                       <div className="absolute bottom-3 left-3">
                         <span className="bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
                           📸 Visual Aid
