@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import DocViewer from 'react-doc-viewer';
 import {Status} from "@prisma/client";
+import DocxViewer from './docxViewer';
 interface Transcript {
   transcription: string;
   words: {
@@ -66,7 +67,7 @@ export default function FileDisplayer({file}:{
     const transcript = file?.transcript as Transcript | null;
     const dyslexiaFriendly = file?.dislexiaFriendly as DyslexiaFriendly | null;
     useEffect(() => {
-      console.log('File data:', file);
+      console.log('File data:', isDocument, isVideo);
     }, [file]);
   return (
     <div className="max-w-6xl mx-auto">
@@ -114,16 +115,7 @@ export default function FileDisplayer({file}:{
                     </div>
                   ) : isDocument ? (
                     <div className="h-96 rounded-lg border border-gray-200 overflow-hidden">
-                      <DocViewer
-                        documents={[{ uri: file?.link! }]}
-                        config={{
-                          header: {
-                            disableHeader: false,
-                            disableFileName: false,
-                            retainURLParams: false
-                          }
-                        }}
-                      />
+                      <DocxViewer fileUrl={`/api/download?url=${file?.link}`} />
                     </div>
                   ) : (
                     <div className="text-center py-12">
@@ -158,9 +150,7 @@ export default function FileDisplayer({file}:{
                   </div>
                   <div className="p-6 max-h-96 overflow-y-auto">
                     <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                      {file?.extractedText.length > 1500 
-                        ? file?.extractedText.substring(0, 1500) + '...' 
-                        : file?.extractedText
+                      {file?.extractedText
                       }
                     </p>
                   </div>

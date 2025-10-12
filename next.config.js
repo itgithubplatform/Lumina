@@ -3,10 +3,7 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
-   experimental: {
-    serverComponentsExternalPackages: ['pdf2json'],
-  },
-
+  serverExternalPackages: ['pdf2json'],
 }
 
 module.exports = nextConfig

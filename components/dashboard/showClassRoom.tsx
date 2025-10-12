@@ -1,12 +1,13 @@
 "use client";
 import React from 'react';
 import { motion } from "framer-motion";
-import { BookOpen, ExternalLink, FileText, Upload, Users } from 'lucide-react';
+import { BookOpen, X, FileText, Upload, Users } from 'lucide-react';
 import FileUpload from './fileUpload';
 import { Status } from '@prisma/client';
 import Link from 'next/link';
+import { useRouter } from 'nextjs-toploader/app';
 
-interface classroom {
+export interface classroom {
   name: string;
   id: string;
   subject: string;
@@ -58,7 +59,7 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
 
     return () => clearInterval(interval);
   }, [classroom.files]);
-
+  const router = useRouter();
   return (
     <div className="p-4 md:p-8 mt-14 max-w-6xl mx-auto min-h-screen">
       {/* Header Section */}
@@ -151,7 +152,7 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
               <p className="text-gray-500 text-sm mt-1">Share learning materials with your students</p>
             </div>
           </div>
-          <FileUpload classroomId={classroom.id} />
+          <FileUpload setClassroom={setClassroom} classroomId={classroom.id} />
         </div>
       </motion.section>
 
@@ -177,7 +178,11 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
           <motion.div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" layout>
             {classroom.files.map((file, index) => (
               file.status === "completed" ? (
-                <Link key={file.id} href={`/file/${file.id}`}>
+                <div key={file.id} onClick={e=>{
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push(`/file/${file.id}`);
+                }}>
                   <motion.div
                     key={file.id}
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -191,11 +196,15 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
                         <FileText className="text-blue-600" size={24} />
                       </div>
                       <motion.p
+                      onClick={e=>{
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
                         whileHover={{ scale: 1.1 }}
-                        className="text-blue-600 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50 transition-colors"
-                        title="View File"
+                        className="text-red-600 hover:text-red-700 p-2 rounded-full hover:bg-blue-50 transition-colors"
+                        title="Delete File"
                       >
-                        <ExternalLink size={18} />
+                        <X size={18} />
                       </motion.p>
                     </div>
 
@@ -209,7 +218,7 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
 
                     </div>
                   </motion.div>
-                </Link>) :
+                </div>) :
                 (<motion.div
                   key={file.id}
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -224,10 +233,10 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
                     </div>
                     <motion.p
                       whileHover={{ scale: 1.1 }}
-                      className="text-blue-600 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50 transition-colors"
+                      className="text-red-600 hover:text-red-700 p-2 rounded-full hover:bg-blue-50 transition-colors"
                       title="View File"
                     >
-                      <ExternalLink size={18} />
+                      <X size={18} />
                     </motion.p>
                   </div>
 

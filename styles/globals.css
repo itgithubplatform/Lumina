@@ -14,8 +14,16 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  --font-body: 'Poppins', sans-serif;
+}
+html, body {
+  font-family: var(--font-body);
 }
 
+h1, h2, h3, h4, h5, h6,
+p, span, a, li, input, button, textarea {
+  font-family: var(--font-body);
+}
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;

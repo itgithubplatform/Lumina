@@ -5,12 +5,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Upload, FileText, X, CloudUpload, CheckCircle, Video, FileType, AlertCircle } from "lucide-react";
 import axios from "axios";
 import { useRouter } from "nextjs-toploader/app";
+import { classroom } from "./showClassRoom";
+import { Status } from "@prisma/client";
 
 interface FileUploadProps {
   classroomId: string;
+  setClassroom: React.Dispatch<React.SetStateAction<classroom>>
 }
-
-export default function FileUpload({ classroomId }: FileUploadProps) {
+interface fileResponse {
+file: {
+    id: string;
+    name: string;
+    link: string;
+    status: Status;
+    createdAt: Date;
+    updatedAt: Date;
+    audioLink: string | null;
+    extractedText: string | null;
+    transcript: null;
+    blindFriendlyLink: string | null;
+    dislexiaFriendly:  null;
+    classId: string;
+}
+}
+export default function FileUpload({ classroomId, setClassroom }: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -89,7 +107,7 @@ export default function FileUpload({ classroomId }: FileUploadProps) {
     setMessage("");
     setIsDragging(false);
     setShowFullscreenDrop(false);
-    
+
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       if (isValidFileType(droppedFile.name)) {
@@ -122,7 +140,7 @@ export default function FileUpload({ classroomId }: FileUploadProps) {
       formData.append("file", file);
       formData.append("classroomId", classroomId);
 
-      await axios.post("/api/files/upload", formData, {
+      const response = await axios.post<fileResponse>("/api/files/upload", formData, {
         onUploadProgress: (progressEvent: any) => {
           if (progressEvent.total) {
             const percent = Math.round(
@@ -138,7 +156,10 @@ export default function FileUpload({ classroomId }: FileUploadProps) {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-      router.refresh();
+      setClassroom(prev => ({
+        ...prev,
+        files: [...(prev.files || []), response.data.file],
+      }));
     } catch (err: any) {
       if (err.response?.data?.error) setMessage(err.response.data.error);
       else setMessage(err.message || "Something went wrong");
@@ -185,11 +206,10 @@ export default function FileUpload({ classroomId }: FileUploadProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`relative border-3 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${
-            isDragging
+          className={`relative border-3 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${isDragging
               ? "border-blue-500 bg-blue-50 scale-105 shadow-lg"
               : "border-gray-300 bg-gradient-to-br from-white to-gray-50/50 hover:border-blue-400 hover:shadow-md"
-          }`}
+            }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -211,14 +231,13 @@ export default function FileUpload({ classroomId }: FileUploadProps) {
             animate={{ scale: isDragging ? 1.05 : 1, y: isDragging ? -5 : 0 }}
             className="flex flex-col items-center justify-center space-y-4"
           >
-            <div className={`p-5 rounded-2xl transition-all duration-300 ${
-              isDragging 
-                ? "bg-blue-100 text-blue-600 scale-110" 
+            <div className={`p-5 rounded-2xl transition-all duration-300 ${isDragging
+                ? "bg-blue-100 text-blue-600 scale-110"
                 : "bg-gradient-to-br from-blue-50 to-purple-50 text-gray-600"
-            }`}>
+              }`}>
               <CloudUpload size={40} />
             </div>
-            
+
             <div className="space-y-3">
               <h3 className="text-xl font-bold text-gray-800">
                 {file ? file.name : "Drag & drop your file"}
@@ -226,7 +245,7 @@ export default function FileUpload({ classroomId }: FileUploadProps) {
               <p className="text-gray-500">
                 {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : "or click to browse"}
               </p>
-              
+
               {/* File Type Info */}
               <div className="flex flex-wrap justify-center gap-2 mt-3">
                 {allowedVideoTypes.map((type, index) => (
@@ -292,11 +311,10 @@ export default function FileUpload({ classroomId }: FileUploadProps) {
             disabled={!file || loading}
             whileHover={!file || loading ? {} : { scale: 1.02, y: -2 }}
             whileTap={!file || loading ? {} : { scale: 0.98 }}
-            className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-3 relative overflow-hidden ${
-              !file || loading
+            className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-3 relative overflow-hidden ${!file || loading
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 hover:from-blue-700 hover:via-purple-700 hover:to-blue-800 text-white shadow-xl hover:shadow-2xl"
-            }`}
+              }`}
           >
             {/* Animated background */}
             {loading && (
@@ -364,11 +382,10 @@ export default function FileUpload({ classroomId }: FileUploadProps) {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className={`p-4 rounded-xl flex items-center space-x-3 border-l-4 ${
-                message.includes("success")
+              className={`p-4 rounded-xl flex items-center space-x-3 border-l-4 ${message.includes("success")
                   ? "bg-green-50 text-green-800 border-green-400"
                   : "bg-red-50 text-red-800 border-red-400"
-              }`}
+                }`}
             >
               {message.includes("success") ? (
                 <CheckCircle className="text-green-600 flex-shrink-0" size={22} />

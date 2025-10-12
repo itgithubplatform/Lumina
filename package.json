@@ -15,6 +15,7 @@
     "@google-cloud/text-to-speech": "^6.3.0",
     "@google-cloud/vertexai": "^1.10.0",
     "@lottiefiles/dotlottie-react": "^0.17.5",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/axios": "^0.9.36",
     "@types/fluent-ffmpeg": "^2.1.27",
     "@types/pdf-parse": "^1.1.5",

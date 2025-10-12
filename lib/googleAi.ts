@@ -46,31 +46,77 @@ export class GoogleAi {
             throw new Error("Error generating text: " + (error as Error)?.message);;
         }
     }
-    async generateTextToSpeech(text: string, outputFile = `./uploads/${Date.now()}-output.mp3`) {
-        try {
-            const [response] = await this.ttsClient.synthesizeSpeech({
-                input: { text },
-                voice: {
-                    "languageCode": "en-in",
-                    "name": "en-IN-Chirp3-HD-Achernar"
-                },
-                audioConfig: {
-                    audioEncoding: "MP3",
-                    speakingRate: 0.9,
-                    pitch: 0,
-                },
-            })
-            if (!response.audioContent) {
-                throw new Error("No audio content received");
-            }
-            await writeFile(outputFile, response.audioContent, 'binary');
-            const {publicUrl} = await this.uploadToCloudStorage(outputFile, "audio");
-            fs.unlinkSync(outputFile);
-            return publicUrl;
-        } catch (error) {
-            throw new Error("Error generating speech: " + (error as Error)?.message);;
-        }
+     async generateTextToSpeech(
+    text: string,
+    outputFile = `./uploads/${Date.now()}-output.mp3`
+  ): Promise<string> {
+    const maxBytesPerChunk = 1000; 
+    const maxRetries = 3;
+
+    const sentences = text.split(/(?<=[.?!])\s+/);
+    const chunks: string[] = [];
+    let current = "";
+
+    for (const sentence of sentences) {
+      const newText = current + sentence + " ";
+      if (Buffer.byteLength(newText, "utf-8") > maxBytesPerChunk) {
+        if (current.trim()) chunks.push(current.trim());
+        current = sentence + " ";
+      } else {
+        current = newText;
+      }
     }
+    if (current.trim()) chunks.push(current.trim());
+
+    const audioBuffers: Buffer[] = [];
+
+    for (const chunk of chunks) {
+      let attempts = 0;
+      let success = false;
+
+      while (attempts < maxRetries && !success) {
+        try {
+          const [response] = await this.ttsClient.synthesizeSpeech({
+            input: { text: chunk },
+            voice: {
+              languageCode: "en-IN",
+              name: "en-IN-Chirp3-HD-Achernar",
+            },
+            audioConfig: {
+              audioEncoding: "MP3",
+              speakingRate: 0.9,
+              pitch: 0,
+            },
+          });
+
+          if (!response.audioContent) {
+            throw new Error("No audio content received for chunk");
+          }
+
+          audioBuffers.push(Buffer.from(response.audioContent as string, "binary"));
+          success = true;
+        } catch (err) {
+          attempts++;
+          if (attempts >= maxRetries) {
+            throw new Error(
+              `Failed to generate audio for chunk after ${maxRetries} attempts: ${(err as Error).message}`
+            );
+          }
+          console.warn(`Retrying chunk due to error: ${(err as Error).message}`);
+          await new Promise((r) => setTimeout(r, 1000 * attempts));
+        }
+      }
+    }
+
+    const finalAudio = Buffer.concat(audioBuffers);
+    await writeFile(outputFile, finalAudio, "binary");
+
+    const { publicUrl } = await this.uploadToCloudStorage(outputFile, "audio");
+
+    fs.unlinkSync(outputFile);
+
+    return publicUrl;
+  }
     async generateSpeechToText(audioUrl: string, lang:"en"|"hi"|"bn" = "en") {
     try {
       const audio = { uri: audioUrl };

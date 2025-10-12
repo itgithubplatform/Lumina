@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, User, Settings, LogOut, Trash2 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "nextjs-toploader/app";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -15,7 +16,7 @@ export default function Navbar() {
   const { data: session,status } = useSession();
 
   const user = session?.user;
-
+ const router=useRouter();
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
@@ -112,7 +113,7 @@ export default function Navbar() {
             {/* Profile Dropdown */}
             {status==="unauthenticated"&&(
 
-            <button className="bg-blue-500 rounded-xl hover:bg-blue-600 text-white py-2 px-4 text-sm font-semibold">Login</button>
+            <button onClick={e=>router.push("/auth/signin")} className="bg-blue-500 rounded-xl hover:bg-blue-600 text-white py-2 px-4 text-sm font-semibold">Login</button>
             )}
             {user && (
               <div className="relative" ref={dropdownRef}>
