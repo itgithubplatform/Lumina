@@ -31,24 +31,28 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
-    async jwt({ token, user, account }) {
-      const userPrisma = user as User
+    async jwt({ token, user, account, trigger }) {
       if (user) {
-      token.uid = userPrisma.id;
-      token.role = userPrisma.role;
-      token.accessibility = userPrisma.accessibility;
-    } else {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: token.uid as string },
-        select: { role: true, accessibility: true },
-      });
-      if (dbUser) {
-        token.role = dbUser.role;
-        token.accessibility = dbUser.accessibility;
+        const userPrisma = user as User
+        token.uid = userPrisma.id;
+        token.role = userPrisma.role;
+        token.accessibility = userPrisma.accessibility;
       }
-    }
+      
+      if (trigger === 'update' || !token.role) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.uid as string },
+          select: { role: true, accessibility: true },
+        });
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.accessibility = dbUser.accessibility;
+        }
+      }
+      
       if (account?.provider) {
         token.provider = account.provider
       }
@@ -67,4 +71,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth/signin',
   },
+  secret: process.env.NEXTAUTH_SECRET,
 }

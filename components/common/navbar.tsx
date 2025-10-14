@@ -65,10 +65,11 @@ export default function Navbar() {
     return pathname.startsWith(route);
   };
 
-  // Navigation items - only dashboard and home
+  // Navigation items
   const navItems = [
     { href: '/', label: 'Home' },
-    { href: '/dashboard', label: 'Dashboard' }
+    { href: '/dashboard', label: 'Dashboard' },
+    ...(user?.role === 'student' ? [{ href: '/my-files', label: 'My Files' }] : [])
   ];
 
   return (

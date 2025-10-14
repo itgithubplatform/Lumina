@@ -160,13 +160,23 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    getClassrooms();
-  }, [reload]);
+    if (status === 'authenticated') {
+      getClassrooms();
+    } else if (status === 'unauthenticated') {
+      router.replace('/auth/signin');
+    }
+  }, [reload, status]);
+
   if (status === 'loading') {
     return <Loader />;
   }
-  if(status === 'unauthenticated'){
-    return router.push('/auth/signin')
+  
+  if (status === 'unauthenticated') {
+    return null;
+  }
+  
+  if (!session?.user) {
+    return <Loader />;
   }
   if (role === 'teacher') {
     return (
@@ -174,6 +184,17 @@ export default function Dashboard() {
         <div className="container mx-auto px-4 py-8">
           {/* Teacher Header */}
           <TeacherDashboardHeader />
+          
+          {/* Quick Upload Button */}
+          <motion.button
+            onClick={() => router.push('/teacher/upload')}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="mb-8 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-3 shadow-lg hover:shadow-xl transition-all"
+          >
+            <Upload className="w-5 h-5" />
+            Upload New Lesson
+          </motion.button>
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
