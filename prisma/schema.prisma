@@ -47,6 +47,7 @@ model User {
   classesTeach  Classroom[]     @relation("TeacherClasses")
   sessions      Session[]
   classesJoin   Classroom[]     @relation("StudentClasses")
+  studentFiles  StudentFiles[]
 }
 
 model VerificationToken {
@@ -69,6 +70,22 @@ model Classroom {
   students  User[]   @relation("StudentClasses")
 
   @@unique([teacherId, name])
+}
+
+model StudentFiles {
+  id                String    @id @default(cuid())
+  name              String
+  link              String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  audioLink         String?
+  status            Status    @default(processing)
+  extractedText     String?
+  blindFriendlyLink String?
+  transcript        Json?
+  dislexiaFriendly  Json?
+  studentId        String
+  Student          User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model Files {

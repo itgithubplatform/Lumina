@@ -1,11 +1,14 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from "framer-motion";
-import { BookOpen, X, FileText, Upload, Users } from 'lucide-react';
+import { BookOpen, X, FileText, Upload, Users, Share, Check } from 'lucide-react';
 import FileUpload from './fileUpload';
 import { Status } from '@prisma/client';
 import Link from 'next/link';
 import { useRouter } from 'nextjs-toploader/app';
+import { useSession } from 'next-auth/react';
+import Loader from '../ui/loader';
+
 
 export interface classroom {
   name: string;
@@ -30,6 +33,8 @@ export interface classroom {
 
 export default function ShowClassRoom({ classroomData }: { classroomData: classroom }) {
   const [classroom, setClassroom] = React.useState<classroom>(classroomData);
+  const [isCopied, setIsCopied] = useState(false);
+  const { data: session, status } = useSession();
 
   React.useEffect(() => {
     const interval = setInterval(async () => {
@@ -60,6 +65,26 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
     return () => clearInterval(interval);
   }, [classroom.files]);
   const router = useRouter();
+  const handleCopyClick = async () => {
+    try {
+
+      await navigator.clipboard.writeText(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/classroom/join?id=${classroom.id}`);
+
+      setIsCopied(true);
+
+      setTimeout(() => {
+        setIsCopied(false);
+      }, 5000);
+
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      // You could also set an error state here to show a different icon
+    }
+  };
+
+  if (status === 'loading') {
+    return <Loader />
+  }
   return (
     <div className="p-4 md:p-8 mt-14 max-w-6xl mx-auto min-h-screen">
       {/* Header Section */}
@@ -79,9 +104,23 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
                     <BookOpen className="text-white" size={32} />
                   </motion.div>
                   <div>
-                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2"> {classroom.name}
+<div className='flex items-center gap-2'>
+                      <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2"> {classroom.name}
                     </h1>
-                    <p className="text-lg text-gray-600 flex items-center gap-2">
+                    <button title='Copy Link'
+                      onClick={handleCopyClick}
+                      disabled={isCopied} // Optional: disable button briefly after click
+                      className="text-gray-500 flex items-center p-2 rounded-md transition-colors duration-200 hover:bg-gray-100"
+                    >
+                      {isCopied ? (
+                        <Check size={20} className="text-green-500" />
+                      ) : (
+                        <Share size={20} className="text-blue-500" />
+                      )}
+                    </button>
+
+  </div>                 
+     <p className="text-lg text-gray-600 flex items-center gap-2">
 
                       <FileText size={20} className="text-blue-500" />
                       {classroom.subject}
@@ -116,9 +155,11 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
                 </div>
                 {/* Quick Actions */}
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex flex-wrap gap-3" >
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg flex items-center gap-2">
-                    <Users size={18} /> Manage Students
-                  </button>
+                  {
+                    session?.user.role === "teacher" && <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg flex items-center gap-2">
+                      <Users size={18} /> Manage Students
+                    </button>
+                  }
                 </motion.div>
               </div>
               {/* Right Visual Element */}
@@ -141,20 +182,23 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
         </div>
       </motion.div>
       {/* File Upload Section - Placed after student count */}
-      <motion.section initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mb-12" >
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 p-6 md:p-8 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <motion.div whileHover={{ scale: 1.1 }} className="bg-gradient-to-br from-orange-500 to-red-500 p-2 rounded-xl" >
-              <Upload className="text-white" size={24} />
-            </motion.div>
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-800">Upload New File</h2>
-              <p className="text-gray-500 text-sm mt-1">Share learning materials with your students</p>
+      {
+        session?.user.role === "teacher" &&
+        <motion.section initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mb-12" >
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 p-6 md:p-8 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <motion.div whileHover={{ scale: 1.1 }} className="bg-gradient-to-br from-orange-500 to-red-500 p-2 rounded-xl" >
+                <Upload className="text-white" size={24} />
+              </motion.div>
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Upload New File</h2>
+                <p className="text-gray-500 text-sm mt-1">Share learning materials with your students</p>
+              </div>
             </div>
+            <FileUpload setClassroom={setClassroom} classroomId={classroom.id} />
           </div>
-          <FileUpload setClassroom={setClassroom} classroomId={classroom.id} />
-        </div>
-      </motion.section>
+        </motion.section>
+      }
 
       <motion.section
         initial={{ opacity: 0, y: 30 }}
@@ -178,7 +222,7 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
           <motion.div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" layout>
             {classroom.files.map((file, index) => (
               file.status === "completed" ? (
-                <div key={file.id} onClick={e=>{
+                <div key={file.id} onClick={e => {
                   e.preventDefault();
                   e.stopPropagation();
                   router.push(`/file/${file.id}`);
@@ -195,17 +239,18 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
                       <div className="bg-blue-100 p-3 rounded-xl">
                         <FileText className="text-blue-600" size={24} />
                       </div>
-                      <motion.p
-                      onClick={e=>{
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                        whileHover={{ scale: 1.1 }}
-                        className="text-red-600 hover:text-red-700 p-2 rounded-full hover:bg-blue-50 transition-colors"
-                        title="Delete File"
-                      >
-                        <X size={18} />
-                      </motion.p>
+                      {session?.user.role === "teacher" && (
+                        <motion.p
+                          onClick={e => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          whileHover={{ scale: 1.1 }}
+                          className="text-red-600 hover:text-red-700 p-2 rounded-full hover:bg-blue-50 transition-colors"
+                          title="Delete File"
+                        >
+                          <X size={18} />
+                        </motion.p>)}
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -231,13 +276,13 @@ export default function ShowClassRoom({ classroomData }: { classroomData: classr
                     <div className="bg-blue-100 p-3 rounded-xl">
                       <FileText className="text-blue-600" size={24} />
                     </div>
-                    <motion.p
+                    {session?.user.role === "teacher" && (<motion.p
                       whileHover={{ scale: 1.1 }}
                       className="text-red-600 hover:text-red-700 p-2 rounded-full hover:bg-blue-50 transition-colors"
                       title="View File"
                     >
                       <X size={18} />
-                    </motion.p>
+                    </motion.p>)}
                   </div>
 
                   <div className="flex justify-between items-center">

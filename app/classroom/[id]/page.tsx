@@ -29,6 +29,7 @@ export default async function Page({ params }: PageProps) {
           },
       });
       
+      
       if (!classroom || classroom.teacherId !== session.user.id) {
           return <ClassroomNotFound />;
       }
@@ -41,6 +42,43 @@ export default async function Page({ params }: PageProps) {
     
     // throw new Error(`Failed to fetch classroom: ${error}`);
   }
+  
 }
+if (session && session.user.role === "student") {
+  try {
+    const classroom = await prisma.classroom.findFirst({
+        where: {
+            id: classroomId,
+            students: {
+              some: {
+                id: session.user.id
+              }
+            }
+          },
+          include: {
+              files: true, 
+              _count: {
+                  select: { students: true },
+              },
+          },
+      });
+      
+      
+      if (!classroom) {
+          return <ClassroomNotFound />;
+      }
+      
+      return (
+            <ShowClassRoom classroomData={classroom} />
+    );
+  } catch (error) {
+    console.log(error);
+    
+    // throw new Error(`Failed to fetch classroom: ${error}`);
+  }
+  
+}
+
+  return <ClassroomNotFound />;
 
             }

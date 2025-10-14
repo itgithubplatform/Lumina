@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, User, Settings, LogOut, Trash2 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "nextjs-toploader/app";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,10 +13,12 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef<null|HTMLDivElement>(null);
   const navref = useRef<null|HTMLElement>(null);  
-  const { data: session,status } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const user = session?.user;
- const router=useRouter();
+
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
@@ -55,6 +57,20 @@ export default function Navbar() {
     }
   };
 
+  // Check if route is active
+  const isActiveRoute = (route: string) => {
+    if (route === '/') {
+      return pathname === '/';
+    }
+    return pathname.startsWith(route);
+  };
+
+  // Navigation items - only dashboard and home
+  const navItems = [
+    { href: '/', label: 'Home' },
+    { href: '/dashboard', label: 'Dashboard' }
+  ];
+
   return (
     <motion.nav
       ref={navref}
@@ -63,7 +79,7 @@ export default function Navbar() {
         y: isScrolled ? 8 : 0,
       }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className={`fixed top-0 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-1/2 transform -translate-x-1/2 z-30 transition-all duration-300 ${
         isScrolled 
           ? "w-[95%] max-w-6xl rounded-3xl shadow-xl bg-white/95 backdrop-blur-md border border-gray-200/60 mt-4" 
           : "w-full bg-white/80 backdrop-blur-sm border-b border-gray-200/80"
@@ -73,7 +89,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/dashboard">
+            <Link href="/">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="flex items-center gap-3 cursor-pointer"
@@ -84,7 +100,7 @@ export default function Navbar() {
                 <motion.span 
                   initial={{ opacity: 1 }}
                   animate={{ opacity: isScrolled ? 0 : 1 }}
-                  className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent "
+                  className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
                 >
                   Lumina+
                 </motion.span>
@@ -94,27 +110,38 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-              Dashboard
-            </Link>
-            <Link href="/classrooms" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-              Classrooms
-            </Link>
-            <Link href="/students" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-              Students
-            </Link>
-            <Link href="/resources" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-              Resources
-            </Link>
+            {navItems.map((item) => (
+              <Link 
+                key={item.href}
+                href={item.href}
+                className="relative text-gray-700 hover:text-blue-600 font-medium transition-colors py-2"
+              >
+                {item.label}
+                {isActiveRoute(item.href) && (
+                  <motion.div
+                    layoutId="activeIndicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </Link>
+            ))}
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center space-x-2 ">
+          <div className="flex items-center space-x-2">
             {/* Profile Dropdown */}
-            {status==="unauthenticated"&&(
-
-            <button onClick={e=>router.push("/auth/signin")} className="bg-blue-500 rounded-xl hover:bg-blue-600 text-white py-2 px-4 text-sm font-semibold">Login</button>
+            {status === "unauthenticated" && (
+              <button 
+                onClick={() => router.push("/auth/signin")} 
+                className="bg-blue-500 rounded-xl hover:bg-blue-600 text-white py-2 px-4 text-sm font-semibold transition-colors"
+              >
+                Login
+              </button>
             )}
+            
             {user && (
               <div className="relative" ref={dropdownRef}>
                 <motion.button
@@ -127,7 +154,6 @@ export default function Navbar() {
                       : "bg-gray-100 hover:bg-gray-200"
                   }`}
                 >
-                  
                   <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                     {user.image ? (
                       <img src={user.image.toString()} alt={user.name || 'User'} className="w-8 h-8 rounded-full" />
@@ -137,8 +163,7 @@ export default function Navbar() {
                   </div>
                   <motion.span 
                     initial={{ opacity: 1 }}
-                    
-                    className="text-gray-700 text-sm font-medium "
+                    className="text-gray-700 text-sm font-medium"
                   >
                     {user.name?.split(' ')[0] || 'User'}
                   </motion.span>
@@ -183,37 +208,18 @@ export default function Navbar() {
                               {user.role || 'Not specified'}
                             </p>
                           </div>
-                            {
-                                session.user.accessibility?.[0]&&(
-                                    <div>
-                                    <p className="text-gray-500">Accessibility</p>
-                                    <p className="font-medium text-gray-800 capitalize">
-                              {session.user.accessibility?.[0]}
-                            </p>
-                          </div>
-                                    
-                                )
-                            }
+                          {session.user.accessibility?.[0] && (
+                            <div>
+                              <p className="text-gray-500">Accessibility</p>
+                              <p className="font-medium text-gray-800 capitalize">
+                                {session.user.accessibility?.[0]}
+                              </p>
+                            </div>
+                          )}
                         </div>
 
                         {/* Action Buttons */}
                         <div className="space-y-2 pt-4 border-t border-gray-200">
-                          {/* <Link 
-                            href="/profile" 
-                            className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
-                            onClick={() => setIsProfileOpen(false)}
-                          >
-                            <User size={18} />
-                            <span>Edit Profile</span>
-                          </Link>
-                          <Link 
-                            href="/settings" 
-                            className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
-                            onClick={() => setIsProfileOpen(false)}
-                          >
-                            <Settings size={18} />
-                            <span>Settings</span>
-                          </Link> */}
                           <button 
                             onClick={handleSignOut}
                             className="w-full flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
@@ -258,34 +264,29 @@ export default function Navbar() {
               className="md:hidden border-t border-gray-200"
             >
               <div className="py-4 space-y-2">
-                <Link
-                  href="/dashboard"
-                  className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/classrooms"
-                  className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Classrooms
-                </Link>
-                <Link
-                  href="/students"
-                  className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Students
-                </Link>
-                <Link
-                  href="/resources"
-                  className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Resources
-                </Link>
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`block px-4 py-3 rounded-xl font-medium transition-colors relative ${
+                      isActiveRoute(item.href)
+                        ? "text-blue-600 bg-transparent"
+                        : "text-gray-700 "
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.label}
+                    {isActiveRoute(item.href) && (
+                      <motion.div
+                        layoutId="mobileActiveIndicator"
+                        className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-purple-600 rounded-r-full"
+                        initial={{ scaleY: 0 }}
+                        animate={{ scaleY: 1 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                  </Link>
+                ))}
               </div>
             </motion.div>
           )}

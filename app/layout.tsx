@@ -8,6 +8,7 @@ import '@/styles/globals.css';
 import { AuthProvider } from '@/components/providers/authProvider';
 import NextTopLoader from 'nextjs-toploader';
 import Navbar from '@/components/common/navbar';
+import AIAssistant from '@/components/ui/AIAssistant';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -45,6 +46,7 @@ export default function RootLayout({
             </AccessibilityProvider>
           </VoiceAccessibilityProvider>
         </AuthProvider>
+          <AIAssistant />
       </body>
     </html>
   );

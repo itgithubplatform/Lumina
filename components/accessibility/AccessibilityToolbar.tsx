@@ -35,7 +35,7 @@ export function AccessibilityToolbar() {
   };
   
   return (
-    <div className="fixed top-20 left-4 bg-white shadow-lg  p-2 px-3 flex gap-2 z-50 border rounded-xl">
+    <div className="fixed bottom-4 left-4 bg-white shadow-lg  p-2 px-3 flex gap-2 z-50 border rounded-xl">
       <div className='flex flex-col items-center'>
     <h3 className='text-sm font-bold text-black'>Tool Bar</h3>
     <div className='flex flex-row gap-2 mt-1'>

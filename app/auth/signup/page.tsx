@@ -32,7 +32,7 @@ export default function page() {
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-gradient-to-br from-[#dbeafe] via-white to-[#e0f2fe]">
+    <main className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-gradient-to-br from-[#dbeafe] via-white to-[#e0f2fe] pt-20">
       {/* Motion blobs for background */}
       <motion.div
         className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-200 opacity-20 sm:opacity-40 blur-3xl"
