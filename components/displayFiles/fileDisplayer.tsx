@@ -11,7 +11,8 @@ import {
   Lightbulb,
   Play,
   Download,
-  Star
+  Star,
+  DownloadIcon
 } from 'lucide-react';
 import { Status } from "@prisma/client";
 import DocxViewer from './docxViewer';
@@ -104,7 +105,11 @@ export default function FileDisplayer({ file }: {
         <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
           {file?.name}
         </h1>
-        <p className="text-gray-600 text-sm sm:text-base">From {file?.class.name}</p>
+        {
+          file?.class?.name && (
+            <p className="text-gray-600 text-sm sm:text-base">From {file?.class.name}</p>
+          )
+        }
         
         {/* Accessibility Badge */}
         {showForStudent && accessiblityMode && (
@@ -114,7 +119,7 @@ export default function FileDisplayer({ file }: {
             className="inline-flex items-center gap-2 mt-3 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
           >
             <Eye size={14} />
-            {accessiblityMode === 'dyslexia' && 'Dyslexia Friendly Mode'}
+            {accessiblityMode === 'dyslexia' && 'Normal Mode'}
             {accessiblityMode === 'visualImpairment' && 'Visual Impairment Mode'}
             {accessiblityMode === 'hearingImpairment' && 'Hearing Impairment Mode'}
             {accessiblityMode === 'cognitiveDisability' && 'Cognitive Disability Mode'}
@@ -256,33 +261,40 @@ export default function FileDisplayer({ file }: {
           {showDyslexiaContent && (
             <div className="grid grid-cols-1 gap-6">
               {/* Audio Section */}
-              {file?.blindFriendlyLink && (
+              {file?.link && (
                 <motion.section
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
+                  className="bg-white rounded-2xl overflow-hidden"
                 >
-                  <div className="bg-gradient-to-r from-orange-500 to-red-500 p-4 text-white">
-                    <div className="flex items-center gap-3">
-                      <Headphones size={20} />
-                      <h2 className="text-lg font-semibold">Audio Learning</h2>
+                  <div className=" p-4 text-white ">
+                    <div className="">
+                      {isVideo ? (
+                    <div className="aspect-video bg-black rounded-lg">
+                      <video controls className="w-full h-full" src={file?.link}>
+                        Your browser does not support the video tag.
+                      </video>
                     </div>
+                  ) : isDocument ? (
+                    <>
+                    <div className=" relative rounded-lg border border-gray-200 h-full">
+                    <a href={file?.link} download className='absolute top-2 right-2  text-blue-500 px-4 py-2 rounded-lg z-50'><DownloadIcon /></a>
+                      <DocxViewer fileUrl={`/api/download?url=${file?.link}`} />
+                    </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <FileText size={32} className="text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-500 text-sm">Preview not available</p>
+                      <a href={file?.link} download className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                        <Download size={16} />
+                        Download File
+                      </a>
+                    </div>
+                  )}
                   </div>
-                  <div className="p-4">
-                    <div className="text-center mb-4">
-                      <AudioLines className="text-orange-500 mx-auto mb-2" size={32} />
-                      <p className="text-gray-600 text-sm">Listen to the content</p>
-                    </div>
-                    <audio controls className="w-full rounded-lg" src={file.blindFriendlyLink}>
-                      Your browser does not support the audio element.
-                    </audio>
                   </div>
                 </motion.section>
-              )}
-
-              {/* Story Section */}
-              {dyslexiaFriendly && (
-                <CompactDyslexiaComic dyslexiaFriendly={dyslexiaFriendly} />
               )}
             </div>
           )}

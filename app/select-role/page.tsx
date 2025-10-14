@@ -9,7 +9,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 
 const accessibilityOptions = [
-  { id: "dyslexia", label: "Dyslexia Support", icon: Brain },
+  { id: "dyslexia", label: "Normal Support", icon: Brain },
   { id: "visualImpairment", label: "Visual Impairment", icon: Eye },
   { id: "hearingImpairment", label: "Hearing Impairment", icon: Headphones },
   { id: "cognitiveDisability", label: "Cognitive Support", icon: Accessibility },

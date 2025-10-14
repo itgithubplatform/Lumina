@@ -14,7 +14,7 @@ export default async function FileViewPage({ params }: any) {
   }
 
   try {
-    const file = await prisma.files.findFirst({
+    let file = await prisma.files.findFirst({
       where: {
         id: id,
         OR: [
@@ -54,7 +54,13 @@ export default async function FileViewPage({ params }: any) {
     console.log(file);
     
     if (!file) {
-      return notFound();
+      // @ts-ignore
+      file = await prisma.studentFiles.findFirst({
+        where: {
+          id: id,
+          studentId: session.user.id,
+        }
+      })
     }
 
     

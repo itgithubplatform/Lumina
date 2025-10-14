@@ -212,7 +212,7 @@ export default function Navbar() {
                             <div>
                               <p className="text-gray-500">Accessibility</p>
                               <p className="font-medium text-gray-800 capitalize">
-                                {session.user.accessibility?.[0]}
+                                {session.user.accessibility?.[0]==="dyslexia"?"Normal":session.user.accessibility?.[0]}
                               </p>
                             </div>
                           )}
